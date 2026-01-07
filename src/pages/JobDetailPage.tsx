@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { jobService } from '../services';
 import type { Job } from '../models';
-import { JobDetailView } from '../views/job';
+import { JobDetailView, type JobUpdateData } from '../views/job';
 const JobDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -30,8 +30,28 @@ const JobDetailPage: React.FC = () => {
     const handleBack = () => {
         navigate('/job');
     };
-    const handleEdit = () => {
-        console.log('Edit job:', job?.id);
+    const handleUpdate = async (data: JobUpdateData) => {
+        if (!job) return;
+        try {
+            const updatedJob = await jobService.updateJob(job.id, {
+                priority: data.priority,
+                status: data.status,
+                description: data.description,
+                group: data.group,
+                type: data.type,
+            });
+            if (updatedJob) {
+                setJob({
+                    ...updatedJob,
+                    group: data.group,
+                    type: data.type,
+                });
+                alert('Cập nhật thành công!');
+            }
+        } catch (error) {
+            console.error('Failed to update job:', error);
+            alert('Cập nhật thất bại!');
+        }
     };
     const handleDelete = async () => {
         if (!job) return;
@@ -59,7 +79,7 @@ const JobDetailPage: React.FC = () => {
             <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                     <h2 className="text-xl font-semibold text-gray-800 mb-2">Không tìm thấy công việc</h2>
-                    <button 
+                    <button
                         onClick={handleBack}
                         className="text-[#F79E61] hover:text-[#e88d50] transition-colors"
                     >
@@ -72,7 +92,7 @@ const JobDetailPage: React.FC = () => {
     return (
         <JobDetailView
             job={job}
-            onEdit={handleEdit}
+            onUpdate={handleUpdate}
             onDelete={handleDelete}
         />
     );

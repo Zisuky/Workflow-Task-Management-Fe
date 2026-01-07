@@ -11,12 +11,12 @@ interface MainLayoutProps {
     onTimeFilterChange?: (filter: string) => void;
     currentTimeFilter?: string;
 }
-const MainLayout: React.FC<MainLayoutProps> = ({ 
-    children, 
-    onLogout, 
-    onAddJob, 
-    onAddProject, 
-    onBack, 
+const MainLayout: React.FC<MainLayoutProps> = ({
+    children,
+    onLogout,
+    onAddJob,
+    onAddProject,
+    onBack,
     onTimeline,
     onTimeFilterChange,
     currentTimeFilter
@@ -34,10 +34,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             return 'Báo cáo';
         }
         if (pathname === '/dashboard') {
-            return 'Danh sách dự án';
+            return 'Quản lý dự án';
         }
         if (pathname.includes('/job')) {
-            return 'Danh sách công việc';
+            return 'Quản lý công việc';
         }
         return 'Trang chủ';
     };

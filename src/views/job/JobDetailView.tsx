@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import type { Job } from '../../models';
+
+export interface JobUpdateData {
+  priority: Job['priority'];
+  status: Job['status'];
+  group: Job['group'];
+  type: Job['type'];
+  description: string;
+}
+
 interface JobDetailViewProps {
   job: Job;
-  onEdit?: () => void;
+  onUpdate?: (data: JobUpdateData) => void;
   onDelete?: () => void;
 }
 const EditIcon = () => (
@@ -66,7 +75,7 @@ const getInitials = (name: string) => {
   if (!name) return '??';
   return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
 };
-export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onEdit, onDelete }) => {
+export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onDelete }) => {
   const [activeTab, setActiveTab] = useState('details');
   const [priority, setPriority] = useState(job.priority);
   const [status, setStatus] = useState(job.status);
@@ -74,8 +83,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onEdit, onDel
   const [type, setType] = useState(job.type);
   const [description, setDescription] = useState(job.description || '');
   const handleSave = () => {
-    if (onEdit) {
-      onEdit();
+    if (onUpdate) {
+      onUpdate({ priority, status, group, type, description });
     }
   };
   return (

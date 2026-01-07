@@ -1,4 +1,4 @@
-export * from './dashboard.model';
+// Note: Dashboard models are defined in dashboard.service.ts
 
 export interface Project {
     id: string;
@@ -14,11 +14,13 @@ export interface Project {
 }
 export interface CreateProjectInput {
     name: string;
-    code: string;
+    code?: string; // Optional as backend generates it
     group: string;
     description: string;
     manager: string;
     members: string;
+    leaderId: string;
+    memberIds: string[];
     startDate: string;
     endDate: string;
 }
@@ -50,7 +52,7 @@ export interface ApiResponse<T> {
     status: number;
     message: string;
 }
-export type JobStatus = 'To Do' | 'In Progress' | 'In Review' | 'Blocked' | 'Done';
+export type JobStatus = 'To Do' | 'In Progress' | 'In Review' | 'Blocked' | 'Done' | 'On Hold';
 export type JobPriority = 'Low' | 'Medium' | 'High' | 'Highest';
 export type JobType = 'Bug' | 'Feature' | 'Task' | 'Improvement';
 export type JobGroup = 'UI/UX' | 'Backend' | 'Frontend' | 'Testing' | 'Database' | 'Documentation' | 'Design';
@@ -69,10 +71,11 @@ export interface Job {
     endDate: string;
     description?: string;
     project?: string;
+    projectId?: string;
 }
 export interface CreateJobInput {
     name: string;
-    code?: string; 
+    code?: string;
     type: JobType;
     group: JobGroup;
     manager: string;
@@ -83,4 +86,9 @@ export interface CreateJobInput {
     estimatedHours: number;
     description?: string;
     project?: string;
+    projectId?: string; // ID của Dự án
+    assignerId?: string; // ID Người giao việc
+    assigneeId?: string; // ID Người được giao việc
+    typeId?: string; // ID Loại công việc (Real UUID)
+    taskGroupId?: string; // ID Nhóm công việc (Real UUID)
 }

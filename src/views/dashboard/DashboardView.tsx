@@ -130,7 +130,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
                 {projects.length === 0 && (
                     <div className="px-6 py-12 text-center text-gray-500 animate-fadeIn">
-                        <span className="text-4xl mb-4 block">🔍</span>
+                        <span className="text-4xl mb-4 block"></span>
                         Không tìm thấy dự án nào
                     </div>
                 )}

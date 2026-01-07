@@ -38,21 +38,12 @@ const AddProjectModalView: React.FC<AddProjectModalViewProps> = ({
                     <h2 className="text-xl font-bold text-gray-800">Thêm Dự Án</h2>
                 </div>
                 <form onSubmit={onSubmit} className="px-8 py-6 space-y-5">
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6">
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Tên Dự Án: *</label>
                             <input
                                 type="text"
                                 name="name"
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm text-gray-600 mb-2">Mã Dự Án: *</label>
-                            <input
-                                type="text"
-                                name="code"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                                 required
                             />

@@ -5,34 +5,34 @@ import ProductivityChart from './ProductivityChart';
 const ProductivityChartDemo: React.FC = () => {
   // Dữ liệu mẫu với các tháng có giá trị khác nhau
   const sampleData = [
-    { name: 'JAN', value: 800 },
-    { name: 'FEB', value: 2000 },
-    { name: 'MAR', value: 2800 },
-    { name: 'APR', value: 800 },
-    { name: 'MAY', value: 1900 },
-    { name: 'JUN', value: 2800 },
-    { name: 'JUL', value: 1500 },
-    { name: 'AUG', value: 900 },
-    { name: 'SEP', value: 2000 },
-    { name: 'OCT', value: 800 },
-    { name: 'NOV', value: 2000 },
-    { name: 'DEC', value: 2800 },
+    { month: 'JAN', target: 1000, actual: 800 },
+    { month: 'FEB', target: 2500, actual: 2000 },
+    { month: 'MAR', target: 3000, actual: 2800 },
+    { month: 'APR', target: 1200, actual: 800 },
+    { month: 'MAY', target: 2200, actual: 1900 },
+    { month: 'JUN', target: 3000, actual: 2800 },
+    { month: 'JUL', target: 2000, actual: 1500 },
+    { month: 'AUG', target: 1200, actual: 900 },
+    { month: 'SEP', target: 2500, actual: 2000 },
+    { month: 'OCT', target: 1200, actual: 800 },
+    { month: 'NOV', target: 2500, actual: 2000 },
+    { month: 'DEC', target: 3000, actual: 2800 },
   ];
 
   // Dữ liệu với empty state (một số tháng = 0)
   const dataWithEmptyState = [
-    { name: 'JAN', value: 1200 },
-    { name: 'FEB', value: 0 }, // Empty state
-    { name: 'MAR', value: 2800 },
-    { name: 'APR', value: 0 }, // Empty state
-    { name: 'MAY', value: 1900 },
-    { name: 'JUN', value: 2800 },
-    { name: 'JUL', value: 0 }, // Empty state
-    { name: 'AUG', value: 900 },
-    { name: 'SEP', value: 2000 },
-    { name: 'OCT', value: 800 },
-    { name: 'NOV', value: 0 }, // Empty state
-    { name: 'DEC', value: 2800 },
+    { month: 'JAN', target: 1500, actual: 1200 },
+    { month: 'FEB', target: 1000, actual: 0 }, // Empty state
+    { month: 'MAR', target: 3000, actual: 2800 },
+    { month: 'APR', target: 1000, actual: 0 }, // Empty state
+    { month: 'MAY', target: 2200, actual: 1900 },
+    { month: 'JUN', target: 3000, actual: 2800 },
+    { month: 'JUL', target: 1000, actual: 0 }, // Empty state
+    { month: 'AUG', target: 1200, actual: 900 },
+    { month: 'SEP', target: 2500, actual: 2000 },
+    { month: 'OCT', target: 1200, actual: 800 },
+    { month: 'NOV', target: 1000, actual: 0 }, // Empty state
+    { month: 'DEC', target: 3000, actual: 2800 },
   ];
 
   return (
@@ -77,7 +77,7 @@ const ProductivityChartDemo: React.FC = () => {
           <p className="text-sm text-gray-600 mb-6">
             Thay đổi mục tiêu tối đa thành 4000 thay vì 6000 mặc định
           </p>
-          <ProductivityChart data={sampleData} maxValue={4000} />
+          <ProductivityChart data={sampleData} />
         </div>
 
         {/* Tính năng đã cải tiến */}

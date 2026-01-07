@@ -53,7 +53,7 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
         }
     };
     const handleProjectClick = (project: Project) => {
-        navigate('/job', { state: { projectFilter: project.code } });
+        navigate('/job', { state: { projectId: project.id } });
     };
     return (
         <DashboardView

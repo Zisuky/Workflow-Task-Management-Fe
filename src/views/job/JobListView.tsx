@@ -58,11 +58,10 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({ columns, onToggle, visi
                                             onChange={() => onToggle(column.key)}
                                             className="sr-only"
                                         />
-                                        <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
-                                            column.visible 
-                                                ? 'bg-blue-500 border-blue-500' 
+                                        <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${column.visible
+                                                ? 'bg-blue-500 border-blue-500'
                                                 : 'border-gray-300'
-                                        }`}>
+                                            }`}>
                                             {column.visible && (
                                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -102,11 +101,10 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ label, options, isActiv
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                    isActive 
-                        ? 'bg-[#46c690] text-white' 
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isActive
+                        ? 'bg-[#46c690] text-white'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                    }`}
             >
                 <span className="truncate">{selectedValue || label}</span>
                 <svg className="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,7 +149,7 @@ interface JobListViewProps {
 }
 const statusColors: Record<JobStatus, string> = {
     'To Do': 'bg-gray-500 text-white',
-    'In Progress': 'bg-orange-500 text-white', 
+    'In Progress': 'bg-orange-500 text-white',
     'In Review': 'bg-blue-500 text-white',
     'Blocked': 'bg-red-500 text-white',
     'Done': 'bg-green-500 text-white',
@@ -162,6 +160,40 @@ const priorityColors: Record<JobPriority, string> = {
     'High': 'bg-orange-500 text-white',
     'Highest': 'bg-red-500 text-white',
 };
+const COLUMNS_STORAGE_KEY = 'jobListColumns';
+
+const defaultColumns: ColumnConfig[] = [
+    { key: 'code', label: 'Mã công việc', visible: true },
+    { key: 'name', label: 'Tên công việc', visible: false },
+    { key: 'project', label: 'Dự án', visible: false },
+    { key: 'type', label: 'Loại công việc', visible: true },
+    { key: 'group', label: 'Nhóm công việc', visible: false },
+    { key: 'status', label: 'Trạng thái', visible: true },
+    { key: 'manager', label: 'Người phụ trách', visible: false },
+    { key: 'assignee', label: 'Người thực hiện', visible: false },
+    { key: 'priority', label: 'Mức độ ưu tiên', visible: false },
+    { key: 'startDate', label: 'Thời gian bắt đầu', visible: false },
+    { key: 'estimatedHours', label: 'Thời gian dự kiến', visible: true },
+    { key: 'endDate', label: 'Thời gian kết thúc', visible: false },
+];
+
+const getInitialColumns = (): ColumnConfig[] => {
+    try {
+        const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
+        if (saved) {
+            const savedColumns = JSON.parse(saved) as ColumnConfig[];
+            // Merge with default to add any new columns
+            return defaultColumns.map(col => {
+                const savedCol = savedColumns.find(s => s.key === col.key);
+                return savedCol ? { ...col, visible: savedCol.visible } : col;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading saved columns:', error);
+    }
+    return defaultColumns;
+};
+
 const JobListView: React.FC<JobListViewProps> = ({
     jobs,
     isLoading,
@@ -173,20 +205,7 @@ const JobListView: React.FC<JobListViewProps> = ({
     onItemsPerPageChange,
     onJobClick,
 }) => {
-    const [columns, setColumns] = useState<ColumnConfig[]>([
-        { key: 'code', label: 'Mã công việc', visible: true },
-        { key: 'name', label: 'Tên công việc', visible: false },
-        { key: 'project', label: 'Dự án', visible: false },
-        { key: 'type', label: 'Loại công việc', visible: true },
-        { key: 'group', label: 'Nhóm công việc', visible: false },
-        { key: 'status', label: 'Trạng thái', visible: true },
-        { key: 'manager', label: 'Người phụ trách', visible: false },
-        { key: 'assignee', label: 'Người thực hiện', visible: false },
-        { key: 'priority', label: 'Mức độ ưu tiên', visible: false },
-        { key: 'startDate', label: 'Thời gian bắt đầu', visible: false },
-        { key: 'estimatedHours', label: 'Thời gian dự kiến', visible: true },
-        { key: 'endDate', label: 'Thời gian kết thúc', visible: false },
-    ]);
+    const [columns, setColumns] = useState<ColumnConfig[]>(getInitialColumns);
     const [filters, setFilters] = useState({
         priority: '',
         group: '',
@@ -201,7 +220,7 @@ const JobListView: React.FC<JobListViewProps> = ({
         }));
     };
     const filteredJobs = jobs.filter(job => {
-        const matchesSearch = !searchTerm || 
+        const matchesSearch = !searchTerm ||
             job.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
             job.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesPriority = !filters.priority || job.priority === filters.priority;
@@ -216,9 +235,18 @@ const JobListView: React.FC<JobListViewProps> = ({
     const visibleColumns = columns.filter(col => col.visible);
     const visibleCount = visibleColumns.length;
     const toggleColumn = (key: string) => {
-        setColumns(prev => prev.map(col => 
-            col.key === key ? { ...col, visible: !col.visible } : col
-        ));
+        setColumns(prev => {
+            const updated = prev.map(col =>
+                col.key === key ? { ...col, visible: !col.visible } : col
+            );
+            // Save to localStorage
+            try {
+                localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(updated));
+            } catch (error) {
+                console.error('Error saving columns:', error);
+            }
+            return updated;
+        });
     };
     const renderCellContent = (job: Job, columnKey: string) => {
         switch (columnKey) {
@@ -343,8 +371,8 @@ const JobListView: React.FC<JobListViewProps> = ({
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredJobs.map((job) => (
-                                <tr 
-                                    key={job.id} 
+                                <tr
+                                    key={job.id}
                                     onClick={() => onJobClick?.(job.id)}
                                     className="hover:bg-orange-50/50 transition-colors cursor-pointer"
                                 >
@@ -392,8 +420,8 @@ const JobListView: React.FC<JobListViewProps> = ({
                                 key={page}
                                 onClick={() => onPageChange(page)}
                                 className={`w-8 h-8 rounded text-sm ${currentPage === page
-                                        ? 'bg-[#F79E61] text-white'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'bg-[#F79E61] text-white'
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
                                 {page}

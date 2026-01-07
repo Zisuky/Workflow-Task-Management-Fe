@@ -9,6 +9,8 @@ const api = axios.create({
     timeout: 10000,
 });
 
+console.log('API Base URL configured:', import.meta.env.VITE_API_URL);
+
 
 api.interceptors.request.use(
     (config) => {
@@ -28,11 +30,11 @@ api.interceptors.response.use(
     (response) => response.data,
     (error) => {
         console.error('API Error:', error);
-        
+
         if (error.code === 'ERR_NETWORK') {
             throw new Error('Network error: Unable to connect to server. Please check your connection or try again later.');
         }
-        
+
         if (error.response?.status === 401) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');

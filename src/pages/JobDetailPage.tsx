@@ -39,12 +39,16 @@ const JobDetailPage: React.FC = () => {
                 description: data.description,
                 group: data.group,
                 type: data.type,
+                typeId: data.typeId,
+                taskGroupId: data.taskGroupId,
             });
             if (updatedJob) {
                 setJob({
                     ...updatedJob,
                     group: data.group,
                     type: data.type,
+                    typeId: data.typeId,
+                    taskGroupId: data.taskGroupId,
                 });
                 alert('Cập nhật thành công!');
             }

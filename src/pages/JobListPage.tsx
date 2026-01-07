@@ -12,21 +12,24 @@ const JobListPage: React.FC = () => {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const navigate = useNavigate();
     const location = useLocation();
-    const projectFilter = location.state?.projectFilter;
+
+    const projectId = location.state?.projectId as string | undefined;
+
     const loadJobs = useCallback(async () => {
         setIsLoading(true);
-        const data = await jobService.getJobs();
+        let data: Job[];
+        if (projectId) {
+            data = await jobService.getJobsByProject(projectId);
+        } else {
+            data = await jobService.getJobs();
+        }
         setAllJobs(data);
         setIsLoading(false);
-    }, []);
+    }, [projectId]);
+
     useEffect(() => {
         loadJobs();
     }, [loadJobs]);
-    useEffect(() => {
-        if (projectFilter) {
-            setSearchTerm(projectFilter);
-        }
-    }, [projectFilter]);
     useEffect(() => {
         let filtered = allJobs;
         if (searchTerm) {

@@ -9,7 +9,7 @@ interface AddProjectModalViewProps {
     selectedMembers: Member[];
     onClose: () => void;
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-    onManagerChange: (value: string) => void;
+    onManagerChange: (name: string, id?: string) => void;
     onMembersChange: (members: Member[]) => void;
     onStartDateChange: (date: string) => void;
     onEndDateChange: (date: string) => void;

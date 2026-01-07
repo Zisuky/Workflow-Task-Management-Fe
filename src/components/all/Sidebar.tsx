@@ -1,13 +1,17 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import SidebarView, { defaultMenuItems } from '../../views/all/SidebarView';
+import { useCurrentUser } from '../../api';
+
 interface SidebarProps {
     isCollapsed?: boolean;
     onToggle?: () => void;
     onLogout?: () => void;
 }
+
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, onLogout }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { currentUser, isLoadingUser } = useCurrentUser();
     const getActiveItem = () => {
         const path = location.pathname;
         if (path === '/home' || path === '/') return 'home';
@@ -51,6 +55,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, onLogo
             onToggle={onToggle || (() => { })}
             onMenuClick={handleMenuClick}
             onLogout={onLogout || (() => { })}
+            currentUser={currentUser}
+            isLoadingUser={isLoadingUser}
         />
     );
 };

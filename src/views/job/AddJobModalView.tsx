@@ -1,6 +1,9 @@
+import { useState, useEffect } from 'react';
 import ManagerSearch from '../../components/dashboard/ManagerSearch';
 import MemberSelectView from '../../components/dashboard/MemberSelect';
 import type { Member } from '../../data/members.data';
+import { projectApi, type ProjectResponse } from '../../api/projectApi';
+
 interface AddJobModalViewProps {
     isOpen: boolean;
     onClose: () => void;
@@ -14,6 +17,7 @@ interface AddJobModalViewProps {
     estimatedHours: number;
     onStartDateChange: (date: string) => void;
     onEndDateChange: (date: string) => void;
+    defaultProjectId?: string; // Pre-fill project when navigating from project list
 }
 const AddJobModalView: React.FC<AddJobModalViewProps> = ({
     isOpen,
@@ -28,7 +32,34 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
     estimatedHours,
     onStartDateChange,
     onEndDateChange,
+    defaultProjectId,
 }) => {
+    const [projects, setProjects] = useState<ProjectResponse[]>([]);
+    const [selectedProjectId, setSelectedProjectId] = useState(defaultProjectId || '');
+    const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+
+    // Load projects from BE
+    useEffect(() => {
+        if (isOpen) {
+            setIsLoadingProjects(true);
+            projectApi.getAll()
+                .then(res => {
+                    setProjects(res.data || []);
+                    if (defaultProjectId) {
+                        setSelectedProjectId(defaultProjectId);
+                    }
+                })
+                .catch(err => console.error('Failed to load projects:', err))
+                .finally(() => setIsLoadingProjects(false));
+        }
+    }, [isOpen, defaultProjectId]);
+
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedProjectId(defaultProjectId || '');
+        }
+    }, [isOpen, defaultProjectId]);
+
     if (!isOpen) return null;
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -80,12 +111,19 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
                         </div>
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Dự án:</label>
-                            <input
-                                type="text"
-                                name="project"
-                                defaultValue="Dự án"
+                            <select
+                                name="projectId"
+                                value={selectedProjectId}
+                                onChange={(e) => setSelectedProjectId(e.target.value)}
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
-                            />
+                            >
+                                <option value="">
+                                    {isLoadingProjects ? 'Đang tải...' : '-- Chọn dự án --'}
+                                </option>
+                                {projects.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
                     {/* Row 3: Mô Tả */}

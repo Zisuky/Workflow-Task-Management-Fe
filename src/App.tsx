@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { MainLayout, AddProjectModal } from './components';
 import AddJobModal from './components/job/AddJobModal';
 import { DashboardPage, LoginPage, JobListPage, JobDetailPage, TimelinePage, HomePage } from './pages';
@@ -18,7 +18,7 @@ function App() {
     const checkAuth = () => {
       const isAuth = authService.isAuthenticated();
       const user = authService.getCurrentUser();
-      
+
       setIsAuthenticated(isAuth);
       setCurrentUser(user);
       setIsLoading(false);
@@ -114,15 +114,18 @@ const AppContent: React.FC<{
   setIsProjectModalOpen
 }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [currentTimeFilter, setCurrentTimeFilter] = useState('all');
-    
+
+    const currentProjectId = location.state?.projectId as string | undefined;
+
     const handleBack = () => {
       navigate('/job');
     };
     const handleTimeline = () => {
       navigate('/job/timeline');
     };
-    
+
     const handleTimeFilterChange = (filter: string) => {
       setCurrentTimeFilter(filter);
     };
@@ -162,6 +165,7 @@ const AppContent: React.FC<{
           onClose={() => setIsJobModalOpen(false)}
           onSubmit={handleAddJob}
           defaultManager={currentUser?.name || ''}
+          defaultProjectId={currentProjectId}
         />
         <AddProjectModal
           isOpen={isProjectModalOpen}

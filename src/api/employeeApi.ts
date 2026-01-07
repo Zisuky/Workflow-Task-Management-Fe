@@ -14,11 +14,8 @@ const externalApi = axios.create({
 
 externalApi.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
         if (token) {
-            // User provided example token: QZejiJvZl09GWzt6mq/...
-            // The screenshot assumes using this token for subsequent calls.
-            // Using 'token' header as per previous code structure, assuming it's correct for this external API.
             config.headers['token'] = token;
         }
         return config;
@@ -26,9 +23,15 @@ externalApi.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-/* =========================
-   TYPES
-========================= */
+externalApi.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.config?.url?.includes('/profiles/me')) {
+            return Promise.reject(error);
+        }
+        return Promise.reject(error);
+    }
+);
 
 export interface Employee {
     id: string;
@@ -37,17 +40,9 @@ export interface Employee {
     avatar_id?: string | null;
 }
 
-/* =========================
-   CACHE (IN-MEMORY)
-========================= */
-
 const employeeByIdCache = new Map<string, Employee>();
 let allEmployeesCache: Employee[] | null = null;
 let loadingAllPromise: Promise<Employee[]> | null = null;
-
-/* =========================
-   HELPERS
-========================= */
 
 function mapRawToEmployee(raw: any, fallbackId = ''): Employee {
     return {
@@ -63,12 +58,8 @@ function mapRawToEmployee(raw: any, fallbackId = ''): Employee {
     };
 }
 
-/* =========================
-   CORE FUNCTIONS
-========================= */
 
 async function getEmployeeById(employeeId: string): Promise<Employee | null> {
-    // ✅ CACHE HIT
     if (employeeByIdCache.has(employeeId)) {
         return employeeByIdCache.get(employeeId)!;
     }
@@ -90,12 +81,10 @@ async function getEmployeeById(employeeId: string): Promise<Employee | null> {
 }
 
 async function getAllEmployees(): Promise<Employee[]> {
-    // ✅ CACHE HIT
     if (allEmployeesCache) {
         return allEmployeesCache;
     }
 
-    // ✅ AVOID DUPLICATE CALLS
     if (loadingAllPromise) {
         return loadingAllPromise;
     }
@@ -131,11 +120,25 @@ async function getAllEmployees(): Promise<Employee[]> {
 }
 
 async function getCurrentUserProfile(): Promise<Employee | null> {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    if (!token) {
+        return null;
+    }
+
     try {
-        const response = await externalApi.get('/profiles/me');
+        const response = await externalApi.get('/profiles/me', {
+            validateStatus: (status) => status < 500,
+        });
+
+        if (response.status >= 400) {
+            return null;
+        }
+
         const raw = response.data?.result || response.data;
 
-        if (!raw) return null;
+        if (!raw) {
+            return null;
+        }
 
         const employeeId = raw.employee_id || raw.id || raw._id;
 
@@ -144,33 +147,25 @@ async function getCurrentUserProfile(): Promise<Employee | null> {
         }
 
         return mapRawToEmployee(raw);
-    } catch (error) {
-        console.error('Failed to fetch current user profile:', error);
+    } catch (error: any) {
         return null;
     }
 }
 
-/* =========================
-   PUBLIC API
-========================= */
 
 export const employeeApi = {
-    // 👤 User đang đăng nhập
     async getCurrentUser(): Promise<Employee | null> {
         return getCurrentUserProfile();
     },
 
-    // 👤 Lấy 1 employee
     async getById(employeeId: string): Promise<Employee | null> {
         return getEmployeeById(employeeId);
     },
 
-    // 👥 Lấy tất cả employees (1 REQUEST DUY NHẤT)
     async getAll(): Promise<Employee[]> {
         return getAllEmployees();
     },
 
-    // 🔍 Search LOCAL – KHÔNG GỌI API
     async search(query: string): Promise<Employee[]> {
         const all = await getAllEmployees();
         const q = query.trim().toLowerCase();
@@ -182,7 +177,6 @@ export const employeeApi = {
         );
     },
 
-    // ♻️ Clear cache khi logout / switch user
     clearCache() {
         employeeByIdCache.clear();
         allEmployeesCache = null;

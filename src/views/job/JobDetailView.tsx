@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Job } from '../../models';
+import { commentApi, type Comment } from '../../api/commentApi';
+import { historyApi, type HistoryItem } from '../../api/historyApi';
+import { taskTypeApi, type TaskType } from '../../api/taskTypeApi';
+import { taskGroupApi, type TaskGroup } from '../../api/taskGroupApi';
 
 export interface JobUpdateData {
   priority: Job['priority'];
@@ -7,6 +11,8 @@ export interface JobUpdateData {
   group: Job['group'];
   type: Job['type'];
   description: string;
+  typeId?: string;
+  taskGroupId?: string;
 }
 
 interface JobDetailViewProps {
@@ -58,6 +64,17 @@ const ChevronDownIcon = () => (
 );
 const formatDate = (dateString: string) => {
   if (!dateString) return 'Chưa xác định';
+
+  if (dateString.includes('-')) {
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) {
+      const day = isoDate.getDate();
+      const month = isoDate.getMonth() + 1;
+      const year = isoDate.getFullYear();
+      return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+    }
+  }
+
   const parts = dateString.split(' ');
   const dateParts = parts[0].split('/');
   if (dateParts.length !== 3) {
@@ -79,12 +96,106 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
   const [activeTab, setActiveTab] = useState('details');
   const [priority, setPriority] = useState(job.priority);
   const [status, setStatus] = useState(job.status);
-  const [group, setGroup] = useState(job.group);
-  const [type, setType] = useState(job.type);
   const [description, setDescription] = useState(job.description || '');
+
+  // Store IDs for type and group
+  const [selectedTypeId, setSelectedTypeId] = useState(job.typeId || '');
+  const [selectedGroupId, setSelectedGroupId] = useState(job.taskGroupId || '');
+
+  // Lists from API
+  const [typesList, setTypesList] = useState<TaskType[]>([]);
+  const [groupsList, setGroupsList] = useState<TaskGroup[]>([]);
+
+  // Comments state
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+  // History state
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  // Load comments when tab is active
+  useEffect(() => {
+    if (activeTab === 'comments' && comments.length === 0) {
+      loadComments();
+    }
+  }, [activeTab]);
+
+  // Load history when tab is active
+  useEffect(() => {
+    if ((activeTab === 'history' || activeTab === 'logs') && history.length === 0) {
+      loadHistory();
+    }
+  }, [activeTab]);
+
+  // Load types and groups on mount
+  useEffect(() => {
+    const loadLists = async () => {
+      try {
+        const [typesRes, groupsRes] = await Promise.all([
+          taskTypeApi.getAll(),
+          taskGroupApi.getAll(),
+        ]);
+        setTypesList(typesRes.data || []);
+        setGroupsList(groupsRes.data || []);
+      } catch (err) {
+        console.error('Failed to load types/groups:', err);
+      }
+    };
+    loadLists();
+  }, []);
+
+  const loadComments = async () => {
+    setIsLoadingComments(true);
+    try {
+      const res = await commentApi.getByTaskId(job.id);
+      setComments(res.data || []);
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const loadHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const res = await historyApi.getByObjectId('TASK', job.id);
+      setHistory(res.data || []);
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    try {
+      await commentApi.create(job.id, newComment.trim());
+      setNewComment('');
+      await loadComments(); // Reload comments
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+  };
+
+  // Get display names from IDs
+  const selectedType = typesList.find(t => t.id === selectedTypeId);
+  const selectedGroup = groupsList.find(g => g.id === selectedGroupId);
+
   const handleSave = () => {
     if (onUpdate) {
-      onUpdate({ priority, status, group, type, description });
+      onUpdate({
+        priority,
+        status,
+        group: (selectedGroup?.name || job.group) as Job['group'],
+        type: (selectedType?.name || job.type) as Job['type'],
+        description,
+        typeId: selectedTypeId || job.typeId,
+        taskGroupId: selectedGroupId || job.taskGroupId,
+      });
     }
   };
   return (
@@ -127,7 +238,6 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                       <option value="Low">Low</option>
                       <option value="Medium">Medium</option>
                       <option value="High">High</option>
-                      <option value="Highest">Highest</option>
                     </select>
                     <ChevronDownIcon />
                   </div>
@@ -142,8 +252,6 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                     >
                       <option value="To Do">To Do</option>
                       <option value="In Progress">In Progress</option>
-                      <option value="In Review">In Review</option>
-                      <option value="Blocked">Blocked</option>
                       <option value="Done">Done</option>
                     </select>
                     <ChevronDownIcon />
@@ -155,16 +263,14 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   <label className="field-label">Nhóm công việc</label>
                   <div className="select-wrapper">
                     <select
-                      value={group}
-                      onChange={(e) => setGroup(e.target.value as any)}
+                      value={selectedGroupId}
+                      onChange={(e) => setSelectedGroupId(e.target.value)}
                       className="field-select"
                     >
-                      <option value="UI/UX">UI/UX</option>
-                      <option value="Backend">Backend</option>
-                      <option value="Frontend">Frontend</option>
-                      <option value="Testing">Testing</option>
-                      <option value="Database">Database</option>
-                      <option value="Design">Design</option>
+                      <option value="">-- Chọn nhóm --</option>
+                      {groupsList.map((g) => (
+                        <option key={g.id} value={g.id}>{g.name}</option>
+                      ))}
                     </select>
                     <ChevronDownIcon />
                   </div>
@@ -173,14 +279,14 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   <label className="field-label">Loại công việc</label>
                   <div className="select-wrapper">
                     <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value as any)}
+                      value={selectedTypeId}
+                      onChange={(e) => setSelectedTypeId(e.target.value)}
                       className="field-select"
                     >
-                      <option value="Task">Task</option>
-                      <option value="Bug">Bug</option>
-                      <option value="Feature">Feature</option>
-                      <option value="Improvement">Improvement</option>
+                      <option value="">-- Chọn loại --</option>
+                      {typesList.map((t) => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
                     </select>
                     <ChevronDownIcon />
                   </div>
@@ -310,18 +416,115 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   </div>
                 )}
                 {activeTab === 'comments' && (
-                  <div className="tab-placeholder">
-                    <p>Chưa có bình luận nào.</p>
+                  <div className="comments-section">
+                    {/* Add comment form */}
+                    <div className="comment-form" style={{ marginBottom: '16px' }}>
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Viết bình luận..."
+                        rows={3}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          marginBottom: '8px',
+                          resize: 'none',
+                          fontSize: '14px'
+                        }}
+                      />
+                      <button
+                        onClick={handleAddComment}
+                        style={{
+                          backgroundColor: '#F79E61',
+                          color: 'white',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        Gửi bình luận
+                      </button>
+                    </div>
+                    {/* Comments list */}
+                    {isLoadingComments ? (
+                      <p style={{ color: '#6b7280' }}>Đang tải...</p>
+                    ) : comments.length === 0 ? (
+                      <p style={{ color: '#6b7280' }}>Chưa có bình luận nào.</p>
+                    ) : (
+                      <div className="comments-list">
+                        {comments.map((comment) => (
+                          <div key={comment.id} style={{
+                            padding: '12px',
+                            backgroundColor: '#f9fafb',
+                            borderRadius: '8px',
+                            marginBottom: '8px'
+                          }}>
+                            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                              <strong>{comment.userId}</strong> • {formatDate(comment.createdAt)}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#374151' }}>
+                              {comment.comment}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 {activeTab === 'history' && (
-                  <div className="tab-placeholder">
-                    <p>Lịch sử thay đổi...</p>
+                  <div className="history-section">
+                    {isLoadingHistory ? (
+                      <p style={{ color: '#6b7280' }}>Đang tải...</p>
+                    ) : history.length === 0 ? (
+                      <p style={{ color: '#6b7280' }}>Chưa có lịch sử thay đổi.</p>
+                    ) : (
+                      <div className="history-list">
+                        {history.filter(h => h.action !== 'COMMENT').map((item) => (
+                          <div key={item.id} style={{
+                            padding: '10px 12px',
+                            borderLeft: '3px solid #F79E61',
+                            backgroundColor: '#f9fafb',
+                            marginBottom: '8px'
+                          }}>
+                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                              {formatDate(item.createdAt)}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#374151' }}>
+                              <strong>{item.userId}</strong> đã {item.action.toLowerCase()} công việc
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 {activeTab === 'logs' && (
-                  <div className="tab-placeholder">
-                    <p>Nhật ký công việc...</p>
+                  <div className="logs-section">
+                    {isLoadingHistory ? (
+                      <p style={{ color: '#6b7280' }}>Đang tải...</p>
+                    ) : history.length === 0 ? (
+                      <p style={{ color: '#6b7280' }}>Chưa có nhật ký.</p>
+                    ) : (
+                      <div className="logs-list">
+                        {history.map((item) => (
+                          <div key={item.id} style={{
+                            padding: '8px 12px',
+                            borderBottom: '1px solid #e5e7eb',
+                            fontSize: '13px'
+                          }}>
+                            <span style={{ color: '#6b7280' }}>{formatDate(item.createdAt)}</span>
+                            <span style={{ margin: '0 8px' }}>•</span>
+                            <span style={{ color: '#374151' }}>{item.action}</span>
+                            <span style={{ margin: '0 8px' }}>•</span>
+                            <span style={{ color: '#6b7280' }}>{item.userId}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

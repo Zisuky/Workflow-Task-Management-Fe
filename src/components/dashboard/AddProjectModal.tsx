@@ -37,13 +37,13 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
         }
     }, [defaultManager, isOpen]);
 
-    const isFormValid = manager.trim() !== '' && selectedMembers.length > 0;
+    const isFormValid = manager.trim() !== '' && managerId.trim() !== '' && selectedMembers.length > 0;
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const name = formData.get('name') as string;
-        if (!name?.trim() || !manager.trim() || selectedMembers.length === 0) {
+        if (!name?.trim() || !manager.trim() || !managerId.trim() || selectedMembers.length === 0) {
             return;
         }
         onSubmit({

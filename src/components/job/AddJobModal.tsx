@@ -27,21 +27,22 @@ interface AddJobModalProps {
     onClose: () => void;
     onSubmit: (data: CreateJobInput) => void;
     defaultManager?: string;
+    defaultProjectId?: string;
 }
-const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, defaultManager = '' }) => {
+const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, defaultManager = '', defaultProjectId }) => {
     const [manager, setManager] = useState(defaultManager);
     const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
     const today = new Date().toISOString().split('T')[0];
     const [startDate, setStartDate] = useState(today);
     const [endDate, setEndDate] = useState(today);
-    const [estimatedHours, setEstimatedHours] = useState(8); // Default 1 working day
+    const [estimatedHours, setEstimatedHours] = useState(8);
     useEffect(() => {
         if (isOpen) {
             setManager(defaultManager);
             setSelectedMembers([]);
             setStartDate(today);
             setEndDate(today);
-            setEstimatedHours(8); // Reset to 1 working day
+            setEstimatedHours(8);
         }
     }, [defaultManager, isOpen, today]);
     useEffect(() => {
@@ -55,15 +56,15 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
             name: formData.get('name') as string,
             type: formData.get('type') as JobType,
             group: formData.get('group') as JobGroup,
-            project: formData.get('project') as string,
+            projectId: formData.get('projectId') as string,
             description: formData.get('description') as string,
             manager: manager,
-            assignee: selectedMembers.map(m => m.name).join(', '), // Convert selected members to string
+            assignee: selectedMembers.map(m => m.name).join(', '),
             startDate: startDate,
             endDate: endDate,
             estimatedHours: estimatedHours,
             priority: formData.get('priority') as JobPriority,
-            code: 'JOB-' + Math.floor(Math.random() * 1000), // Auto-generate code for now
+            code: 'JOB-' + Math.floor(Math.random() * 1000),
         };
         onSubmit(input);
         setSelectedMembers([]);
@@ -96,6 +97,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
             estimatedHours={estimatedHours}
             onStartDateChange={handleStartDateChange}
             onEndDateChange={handleEndDateChange}
+            defaultProjectId={defaultProjectId}
         />
     );
 };

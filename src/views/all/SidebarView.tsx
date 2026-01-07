@@ -1,8 +1,12 @@
+import { getUserInitials } from '../../api';
+import type { Employee } from '../../api/employeeApi';
+
 interface MenuItem {
     id: string;
     label: string;
     icon: React.ReactNode;
 }
+
 interface SidebarViewProps {
     isCollapsed: boolean;
     activeItem: string;
@@ -10,6 +14,8 @@ interface SidebarViewProps {
     onToggle: () => void;
     onMenuClick: (id: string) => void;
     onLogout: () => void;
+    currentUser?: Employee | null;
+    isLoadingUser?: boolean;
 }
 function HomeIcon() {
     return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
@@ -60,7 +66,12 @@ const SidebarView: React.FC<SidebarViewProps> = ({
     onToggle,
     onMenuClick,
     onLogout,
+    currentUser,
+    isLoadingUser = false,
 }) => {
+    const userInitials = getUserInitials(currentUser?.name);
+    const userName = currentUser?.name || (isLoadingUser ? 'Đang tải...' : 'User');
+    const userPosition = currentUser?.position_id || (isLoadingUser ? '' : 'N/A');
     return (
         <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ${isCollapsed ? 'w-[70px]' : 'w-[250px]'}`}>
             <button
@@ -73,11 +84,19 @@ const SidebarView: React.FC<SidebarViewProps> = ({
                 <ChevronIcon isCollapsed={isCollapsed} />
             </button>
             <div className="flex items-center gap-3 p-4 border-b border-gray-100">
-                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">NB</div>
+                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                    {isLoadingUser ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                        userInitials
+                    )}
+                </div>
                 {!isCollapsed && (
                     <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-semibold text-gray-800 truncate">Nguyễn Bảo Thành</span>
-                        <span className="text-xs text-gray-500">BA</span>
+                        <span className="text-sm font-semibold text-gray-800 truncate">
+                            {isLoadingUser ? 'Đang tải...' : userName}
+                        </span>
+                        <span className="text-xs text-gray-500">{userPosition}</span>
                     </div>
                 )}
             </div>

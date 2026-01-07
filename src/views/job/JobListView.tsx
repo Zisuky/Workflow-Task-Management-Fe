@@ -59,8 +59,8 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({ columns, onToggle, visi
                                             className="sr-only"
                                         />
                                         <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${column.visible
-                                                ? 'bg-blue-500 border-blue-500'
-                                                : 'border-gray-300'
+                                            ? 'bg-blue-500 border-blue-500'
+                                            : 'border-gray-300'
                                             }`}>
                                             {column.visible && (
                                                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -102,8 +102,8 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ label, options, isActiv
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${isActive
-                        ? 'bg-[#46c690] text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-[#46c690] text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
             >
                 <span className="truncate">{selectedValue || label}</span>
@@ -153,6 +153,7 @@ const statusColors: Record<JobStatus, string> = {
     'In Review': 'bg-blue-500 text-white',
     'Blocked': 'bg-red-500 text-white',
     'Done': 'bg-green-500 text-white',
+    'On Hold': 'bg-yellow-500 text-white',
 };
 const priorityColors: Record<JobPriority, string> = {
     'Low': 'bg-gray-500 text-white',
@@ -370,14 +371,14 @@ const JobListView: React.FC<JobListViewProps> = ({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {filteredJobs.map((job) => (
+                            {filteredJobs.map((job, index) => (
                                 <tr
-                                    key={job.id}
+                                    key={job.id || `job-${index}`}
                                     onClick={() => onJobClick?.(job.id)}
                                     className="hover:bg-orange-50/50 transition-colors cursor-pointer"
                                 >
-                                    {visibleColumns.map((column) => (
-                                        <td key={column.key} className="px-4 py-3 text-sm">
+                                    {visibleColumns.map((column, colIndex) => (
+                                        <td key={`${job.id || index}-${column.key || colIndex}`} className="px-4 py-3 text-sm">
                                             {renderCellContent(job, column.key)}
                                         </td>
                                     ))}

@@ -1,46 +1,109 @@
 import type { Job, CreateJobInput } from '../models';
 import { taskApi, type TaskResponse } from '../api/taskApi';
 import { employeeApi } from '../api/employeeApi';
+import { projectApi } from '../api/projectApi';
+import { taskTypeApi } from '../api/taskTypeApi';
+import { taskGroupApi } from '../api/taskGroupApi';
 import { mockJobs } from '../data/jobs.data';
 
-// Flag để chuyển đổi giữa mock data và API thật
 const USE_REAL_API = true;
 
-// Cache for employee names
 const employeeCache: Map<string, string> = new Map();
+const projectCache: Map<string, string> = new Map();
 
-// Fetch employee name by ID with caching
 async function getEmployeeName(employeeId: string): Promise<string> {
-    if (!employeeId) return 'Chưa có';
+    if (!employeeId) return '';
 
     if (employeeCache.has(employeeId)) {
         return employeeCache.get(employeeId)!;
     }
 
+
+    if (employeeId.includes(' ')) {
+        employeeCache.set(employeeId, employeeId);
+        return employeeId;
+    }
+
     try {
         const employee = await employeeApi.getById(employeeId);
-        const name = employee?.name || 'Chưa có';
+        const name = employee?.name || employeeId;
         employeeCache.set(employeeId, name);
         return name;
     } catch (error) {
-        console.error(`Failed to fetch employee ${employeeId}:`, error);
-        return 'Chưa có';
+        console.warn(`Failed to fetch employee name for ${employeeId}, using ID as fallback`);
+        employeeCache.set(employeeId, employeeId);
+        return employeeId;
     }
 }
 
+async function getProjectName(projectId: string): Promise<string> {
+    if (!projectId) return 'Dự án';
+    if (projectCache.has(projectId)) return projectCache.get(projectId)!;
+
+    try {
+        const response = await projectApi.getById(projectId);
+        if (response.data && response.data.name) {
+            projectCache.set(projectId, response.data.name);
+            return response.data.name;
+        }
+    } catch {
+    }
+    return 'Dự án';
+}
+
+const typeCache: Map<string, string> = new Map();
+const groupCache: Map<string, string> = new Map();
+
+export const getTypeName = async (typeId: string): Promise<string> => {
+    if (!typeId) return 'Task';
+    if (typeCache.has(typeId)) return typeCache.get(typeId)!;
+
+    try {
+        const response = await taskTypeApi.getById(typeId);
+        if (response.data && response.data.name) {
+            typeCache.set(typeId, response.data.name);
+            return response.data.name;
+        }
+    } catch {
+    }
+    return 'Task';
+};
+
+export const getGroupName = async (groupId: string): Promise<string> => {
+    if (!groupId) return 'Backend';
+    if (groupCache.has(groupId)) return groupCache.get(groupId)!;
+
+    try {
+        const response = await taskGroupApi.getById(groupId);
+        if (response.data && response.data.name) {
+            groupCache.set(groupId, response.data.name);
+            return response.data.name;
+        }
+    } catch {
+    }
+    return 'Backend';
+};
+
 // Status mapping: BE -> FE
+// BE only has: NOT_STARTED, IN_PROGRESS, COMPLETED
 const beToFeStatus: Record<string, Job['status']> = {
     'NOT_STARTED': 'To Do',
     'IN_PROGRESS': 'In Progress',
     'COMPLETED': 'Done',
+    'IN_REVIEW': 'In Review',
+    'BLOCKED': 'Blocked',
+    'ON_HOLD': 'On Hold',
 };
 
 // Status mapping: FE -> BE
+// Note: DB has CHECK Constraint allowing only: NOT_STARTED, IN_PROGRESS, COMPLETED
 const feToBEStatus: Record<Job['status'], string> = {
     'To Do': 'NOT_STARTED',
     'In Progress': 'IN_PROGRESS',
-    'In Review': 'IN_PROGRESS',
-    'Blocked': 'NOT_STARTED',
+    // Map Check Constraint violators back to allowed values
+    'In Review': 'IN_PROGRESS', // Or NOT_STARTED depending on logic
+    'Blocked': 'NOT_STARTED',   // Treat as To Do
+    'On Hold': 'NOT_STARTED',   // Treat as To Do
     'Done': 'COMPLETED',
 };
 
@@ -52,27 +115,34 @@ const beTofePriority: Record<string, Job['priority']> = {
     'HIGH': 'High',
 };
 
-// Mapper: chuyển đổi BE TaskResponse sang FE Job (async to resolve names)
 const mapToJob = async (task: TaskResponse): Promise<Job> => {
-    const [managerName, assigneeName] = await Promise.all([
+    // Fetch related names
+    const [managerName, assigneeName, projectName, typeName, groupName] = await Promise.all([
         getEmployeeName(task.assignerId),
         getEmployeeName(task.assigneeId),
+        getProjectName(task.projectId),
+        getTypeName(task.typeId),
+        getGroupName(task.taskGroupId),
     ]);
 
     return {
         id: task.id,
         code: task.name.substring(0, 3).toUpperCase() + '-' + task.id.substring(0, 4).toUpperCase(),
         name: task.name,
-        type: 'Task', // Default
-        group: 'Backend', // Default - valid JobGroup value
+        type: typeName as Job['type'],
+        group: groupName as Job['group'],
         status: beToFeStatus[task.status] || 'To Do',
         priority: beTofePriority[task.priority] || 'Medium',
         manager: managerName,
         assignee: assigneeName,
         startDate: task.startDate || task.createdAt,
         endDate: task.endDate || '',
-        estimatedHours: 8, // Default
+        estimatedHours: 8,
         description: task.note || '',
+        project: projectName,
+        projectId: task.projectId,
+        typeId: task.typeId,
+        taskGroupId: task.taskGroupId,
     };
 };
 
@@ -113,7 +183,9 @@ export const jobService = {
         if (USE_REAL_API) {
             try {
                 const response = await taskApi.getByProject(projectId);
-                return response.data.map(mapToJob);
+                // Must use Promise.all because mapToJob is async
+                const jobs = await Promise.all(response.data.map(mapToJob));
+                return jobs;
             } catch (error) {
                 console.error('Task API Error:', error);
                 return [];
@@ -157,7 +229,7 @@ export const jobService = {
                 const beStatus = updates.status ? feToBEStatus[updates.status] : existingTask.status;
                 const bePriority = updates.priority ? updates.priority.toUpperCase() : existingTask.priority;
 
-                const response = await taskApi.update(id, {
+                const updatePayload = {
                     name: updates.name || existingTask.name,
                     status: beStatus,
                     priority: bePriority === 'HIGHEST' ? 'HIGH' : bePriority,
@@ -165,11 +237,14 @@ export const jobService = {
                     assigneeId: existingTask.assigneeId,
                     assignerId: existingTask.assignerId,
                     projectId: existingTask.projectId,
-                    taskGroupId: existingTask.taskGroupId,
-                    typeId: existingTask.typeId,
+                    // Use new IDs if provided, otherwise keep existing
+                    taskGroupId: updates.taskGroupId || existingTask.taskGroupId,
+                    typeId: updates.typeId || existingTask.typeId,
                     startDate: existingTask.startDate,
                     endDate: existingTask.endDate,
-                });
+                    userUpdateId: existingTask.userUpdateId || existingTask.assignerId || 'system',
+                };
+                const response = await taskApi.update(id, updatePayload);
                 return mapToJob(response.data);
             } catch (error) {
                 console.error('Task API Error, falling back to mock:', error);
@@ -188,22 +263,81 @@ export const jobService = {
             try {
                 const priority = input.priority ? input.priority.toUpperCase() : 'MEDIUM';
 
-                const defaultProjectId = '00000000-0000-0000-0000-000000000001';
-                const defaultTaskGroupId = '00000000-0000-0000-0000-000000000001';
-                const defaultTypeId = '00000000-0000-0000-0000-000000000001';
+                // Fetch real UUIDs from BE if not provided in input
+                let projectId = input.projectId;
+                let taskGroupId = input.taskGroupId;
+                let typeId = input.typeId;
+
+                // Get first available project if not specified
+                if (!projectId) {
+                    try {
+                        const projectsRes = await projectApi.getAll();
+                        if (projectsRes.data && projectsRes.data.length > 0) {
+                            projectId = projectsRes.data[0].id;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to fetch projects:', e);
+                    }
+                }
+
+                // Get first available task type if not specified
+                if (!typeId) {
+                    try {
+                        const typesRes = await taskTypeApi.getAll();
+                        if (typesRes.data && typesRes.data.length > 0) {
+                            typeId = typesRes.data[0].id;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to fetch task types:', e);
+                    }
+                }
+
+                // Get first available task group (by project) if not specified
+                if (!taskGroupId && projectId) {
+                    try {
+                        const groupsRes = await taskGroupApi.getByProjectId(projectId);
+                        if (groupsRes.data && groupsRes.data.length > 0) {
+                            taskGroupId = groupsRes.data[0].id;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to fetch task groups:', e);
+                    }
+                }
+
+                // If still no taskGroupId, try getting all task groups
+                if (!taskGroupId) {
+                    try {
+                        const allGroupsRes = await taskGroupApi.getAll();
+                        if (allGroupsRes.data && allGroupsRes.data.length > 0) {
+                            taskGroupId = allGroupsRes.data[0].id;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to fetch all task groups:', e);
+                    }
+                }
+
+                // Validate we have required UUIDs
+                if (!projectId || !typeId || !taskGroupId) {
+                    throw new Error(`Missing required IDs: projectId=${projectId}, typeId=${typeId}, taskGroupId=${taskGroupId}`);
+                }
+
+                // Use assignerId/assigneeId from input or default to current user
+                const assignerId = input.assignerId || input.manager || 'system';
+                const assigneeId = input.assigneeId || input.assignee || 'system';
 
                 const response = await taskApi.create({
                     name: input.name,
                     status: 'NOT_STARTED',
-                    priority: priority === 'CRITICAL' ? 'HIGH' : priority,
+                    priority: priority === 'CRITICAL' || priority === 'HIGHEST' ? 'HIGH' : priority,
                     note: input.description || '',
-                    projectId: defaultProjectId,
-                    taskGroupId: defaultTaskGroupId,
-                    typeId: defaultTypeId,
-                    assignerId: '60d0fe4f5311236168a109ca',
-                    assigneeId: '60d0fe4f5311236168a109ca',
-                    startDate: input.startDate || null,
-                    endDate: input.endDate || null,
+                    projectId: projectId,
+                    taskGroupId: taskGroupId,
+                    typeId: typeId,
+                    assignerId: assignerId,
+                    assigneeId: assigneeId,
+                    userUpdateId: assignerId, // Required by DB - use assigner as updater
+                    startDate: input.startDate ? `${input.startDate}T00:00:00` : null,
+                    endDate: input.endDate ? `${input.endDate}T23:59:59` : null,
                 });
                 return mapToJob(response.data);
             } catch (error) {

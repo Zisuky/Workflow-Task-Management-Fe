@@ -72,6 +72,8 @@ export interface Job {
     description?: string;
     project?: string;
     projectId?: string;
+    typeId?: string;
+    taskGroupId?: string;
 }
 export interface CreateJobInput {
     name: string;

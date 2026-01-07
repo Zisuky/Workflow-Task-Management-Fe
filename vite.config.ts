@@ -58,6 +58,20 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace('/api/pmcc/v1/users', '/api/users'),
         },
 
+        '/api/pmcc/v1/type-tasks': {
+          target: localBeUrl,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace('/api/pmcc/v1/type-tasks', '/api/type-tasks'),
+        },
+
+        '/api/pmcc/v1/task-groups': {
+          target: localBeUrl,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace('/api/pmcc/v1/task-groups', '/api/task-groups'),
+        },
+
         '/api': {
           target: externalApiUrl,
           changeOrigin: true,

@@ -1,0 +1,5 @@
+# API requests are handled by Netlify Edge Functions (netlify/edge-functions/api-proxy.js)
+
+# SPA Fallback - must be last
+/*  /index.html  200
+

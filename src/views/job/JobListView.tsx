@@ -161,6 +161,25 @@ const priorityColors: Record<JobPriority, string> = {
     'High': 'bg-orange-500 text-white',
     'Highest': 'bg-red-500 text-white',
 };
+
+// Helper function to format date/time to DD/MM/YYYY HH:mm
+const formatDateTime = (dateString: string | undefined): string => {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    } catch {
+        return dateString;
+    }
+};
 const COLUMNS_STORAGE_KEY = 'jobListColumns';
 
 const defaultColumns: ColumnConfig[] = [
@@ -278,11 +297,11 @@ const JobListView: React.FC<JobListViewProps> = ({
                     </span>
                 );
             case 'startDate':
-                return <span className="text-gray-600 whitespace-nowrap">{job.startDate}</span>;
+                return <span className="text-gray-600 whitespace-nowrap">{formatDateTime(job.startDate)}</span>;
             case 'estimatedHours':
                 return <span className="text-gray-600">{job.estimatedHours} giờ</span>;
             case 'endDate':
-                return <span className="text-gray-600 whitespace-nowrap">{job.endDate || '-'}</span>;
+                return <span className="text-gray-600 whitespace-nowrap">{formatDateTime(job.endDate)}</span>;
             default:
                 return null;
         }

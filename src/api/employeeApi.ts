@@ -91,7 +91,7 @@ async function getAllEmployees(): Promise<Employee[]> {
 
     loadingAllPromise = (async () => {
         try {
-            const response = await externalApi.get('/employees');
+            const response = await externalApi.get('/employees/?$sort=&$limit=500&$offset=0');
             const rawList = response.data?.result || response.data || [];
 
             if (!Array.isArray(rawList)) {
@@ -126,7 +126,7 @@ async function getCurrentUserProfile(): Promise<Employee | null> {
     }
 
     try {
-        const response = await externalApi.get('/profiles/me', {
+        const response = await externalApi.get('/auth/me', {
             validateStatus: (status) => status < 500,
         });
 

@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/pmcc/v1';
+const API_BASE_URL = import.meta.env.PROD ? '/api/pmcc/v1' : (import.meta.env.VITE_API_BASE_URL || '/api/pmcc/v1');
 
 export interface LoginRequest {
     account: string;
@@ -52,8 +52,6 @@ export const loginApi = {
             return data;
         }
 
-        // Try to get error message from server response if available, otherwise use default
-        // Assuming server might return a 'message' or 'error' field
         const errorMessage = (data as any).message || (data as any).error || 'Sai tai khoan hoac mat khau';
         throw new Error(errorMessage);
     },

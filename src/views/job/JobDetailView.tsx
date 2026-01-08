@@ -332,6 +332,16 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                 <div className="info-value-text">{job.code}</div>
               </div>
             </div>
+            {/* Read Date */}
+            <div className="info-row">
+              <div className="info-item">
+                <div className="info-label">
+                  <CalendarIcon />
+                  <span>Ngày tạo việc</span>
+                </div>
+                <div className="info-value-text info-value-bold">{formatDate(job.startDate)}</div>
+              </div>
+            </div>
             {/* Start Date */}
             <div className="info-row">
               <div className="info-item">

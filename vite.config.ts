@@ -28,6 +28,11 @@ export default defineConfig(({ mode }) => {
           target: 'https://office.uds.com.vn',
           changeOrigin: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on('proxyRes', (proxyRes) => {
+              proxyRes.headers['content-type'] = 'application/json; charset=utf-8';
+            });
+          },
         },
 
         '/api/pmcc/v1/dashboard': {

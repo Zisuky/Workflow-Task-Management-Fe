@@ -7,6 +7,7 @@ interface AddProjectModalProps {
     onClose: () => void;
     onSubmit: (data: ProjectFormData) => void;
     defaultManager?: string;
+    defaultManagerId?: string;
 }
 
 export interface ProjectFormData {
@@ -22,9 +23,9 @@ export interface ProjectFormData {
     endDate: string;
 }
 
-const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSubmit, defaultManager = '' }) => {
+const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
-    const [manager, setManager] = useState(defaultManager);
+    const [manager, setManager] = useState('');
     const [managerId, setManagerId] = useState('');
     const today = new Date().toISOString().split('T')[0];
     const [startDate, setStartDate] = useState(today);
@@ -32,10 +33,13 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
 
     useEffect(() => {
         if (isOpen) {
-            setManager(defaultManager);
+            setManager('');
             setManagerId('');
+            setSelectedMembers([]);
+            setStartDate(today);
+            setEndDate(today);
         }
-    }, [defaultManager, isOpen]);
+    }, [isOpen, today]);
 
     const isFormValid = manager.trim() !== '' && managerId.trim() !== '' && selectedMembers.length > 0;
 

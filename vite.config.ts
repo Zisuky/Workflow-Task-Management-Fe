@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -9,7 +10,18 @@ export default defineConfig(({ mode }) => {
   const localBeUrl = env.VITE_LOCAL_BE_URL
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      viteStaticCopy({
+        targets: [
+          {
+            src: 'netlify.toml',
+            dest: '.'
+          }
+        ]
+      })
+    ],
     server: {
       proxy: {
         '/api/pmcc/v1/auth': {
@@ -75,6 +87,13 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace('/api/pmcc/v1/task-groups', '/api/task-groups'),
+        },
+
+        '/api/pmcc/v1/history': {
+          target: localBeUrl,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace('/api/pmcc/v1/history', '/api/history'),
         },
 
         '/api': {

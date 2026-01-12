@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { projectService } from '../services';
 import type { Project, CreateProjectInput } from '../models';
 import { DashboardView } from '../views';
+import ProjectDetailModal from '../components/dashboard/ProjectDetailModal';
+
 const ITEMS_PER_PAGE = 10;
 interface DashboardPageProps {
     onAddProject?: () => void;
@@ -14,6 +16,9 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
     const loadProjects = useCallback(async () => {
         setIsLoading(true);
         const data = await projectService.getProjects();
@@ -55,18 +60,34 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
     const handleProjectClick = (project: Project) => {
         navigate('/job', { state: { projectId: project.id } });
     };
+    const handleViewDetail = (project: Project) => {
+        setSelectedProject(project);
+        setIsDetailModalOpen(true);
+    };
+    const handleCloseDetailModal = () => {
+        setIsDetailModalOpen(false);
+        setSelectedProject(null);
+    };
     return (
-        <DashboardView
-            isLoading={isLoading}
-            searchTerm={searchTerm}
-            projects={displayedProjects}
-            hasMore={hasMore}
-            isLoadingMore={isLoadingMore}
-            onSearchChange={setSearchTerm}
-            onTogglePin={handleTogglePin}
-            onLoadMore={handleLoadMore}
-            onProjectClick={handleProjectClick}
-        />
+        <>
+            <DashboardView
+                isLoading={isLoading}
+                searchTerm={searchTerm}
+                projects={displayedProjects}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onSearchChange={setSearchTerm}
+                onTogglePin={handleTogglePin}
+                onLoadMore={handleLoadMore}
+                onProjectClick={handleProjectClick}
+                onViewDetail={handleViewDetail}
+            />
+            <ProjectDetailModal
+                isOpen={isDetailModalOpen}
+                project={selectedProject}
+                onClose={handleCloseDetailModal}
+            />
+        </>
     );
 };
 export const useAddProject = () => {
@@ -76,3 +97,4 @@ export const useAddProject = () => {
     return { addProject };
 };
 export default DashboardPage;
+

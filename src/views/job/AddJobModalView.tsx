@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import ManagerSearch from '../../components/dashboard/ManagerSearch';
 import MemberSelectView from '../../components/dashboard/MemberSelect';
+import ProjectSearchDropdown from '../../components/job/ProjectSearchDropdown';
+import DateInput from '../../components/common/DateInput';
 import type { Member } from '../../data/members.data';
 import { projectApi, type ProjectResponse } from '../../api/projectApi';
 
@@ -9,15 +11,16 @@ interface AddJobModalViewProps {
     onClose: () => void;
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
     manager: string;
-    onManagerChange: (value: string) => void;
+    onManagerChange: (name: string, id?: string) => void;
     selectedMembers: Member[];
+
     onMembersChange: (members: Member[]) => void;
     startDate: string;
     endDate: string;
     estimatedHours: number;
     onStartDateChange: (date: string) => void;
     onEndDateChange: (date: string) => void;
-    defaultProjectId?: string; // Pre-fill project when navigating from project list
+    defaultProjectId?: string;
 }
 const AddJobModalView: React.FC<AddJobModalViewProps> = ({
     isOpen,
@@ -38,7 +41,6 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
     const [selectedProjectId, setSelectedProjectId] = useState(defaultProjectId || '');
     const [isLoadingProjects, setIsLoadingProjects] = useState(false);
 
-    // Load projects from BE
     useEffect(() => {
         if (isOpen) {
             setIsLoadingProjects(true);
@@ -60,6 +62,28 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
         }
     }, [isOpen, defaultProjectId]);
 
+    const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
+    const [isFormValid, setIsFormValid] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            // Reset form when opened
+            setName('');
+            setDescription('');
+        }
+    }, [isOpen]);
+
+    useEffect(() => {
+        const isValid =
+            name.trim() !== '' &&
+            selectedProjectId !== '' &&
+            description.trim() !== '' &&
+            manager !== '' &&
+            selectedMembers.length > 0;
+        setIsFormValid(isValid);
+    }, [name, selectedProjectId, description, manager, selectedMembers]);
+
     if (!isOpen) return null;
     const today = new Date().toISOString().split('T')[0];
     return (
@@ -72,10 +96,12 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
                 <form onSubmit={onSubmit} className="px-8 py-6 space-y-5">
                     {/* Row 1: Tên Công Việc */}
                     <div>
-                        <label className="block text-sm text-gray-600 mb-2">Tên Công Việc: *</label>
+                        <label className="block text-sm text-gray-600 mb-2">Tên Công Việc: <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             name="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                             required
                             className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                         />
@@ -110,27 +136,23 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm text-gray-600 mb-2">Dự án:</label>
-                            <select
-                                name="projectId"
-                                value={selectedProjectId}
-                                onChange={(e) => setSelectedProjectId(e.target.value)}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
-                            >
-                                <option value="">
-                                    {isLoadingProjects ? 'Đang tải...' : '-- Chọn dự án --'}
-                                </option>
-                                {projects.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                            </select>
+                            <label className="block text-sm text-gray-600 mb-2">Dự án: <span className="text-red-500">*</span></label>
+                            <ProjectSearchDropdown
+                                projects={projects}
+                                selectedProjectId={selectedProjectId}
+                                onSelect={setSelectedProjectId}
+                                isLoading={isLoadingProjects}
+                            />
+                            <input type="hidden" name="projectId" value={selectedProjectId} />
                         </div>
                     </div>
                     {/* Row 3: Mô Tả */}
                     <div>
-                        <label className="block text-sm text-gray-600 mb-2">Mô Tả:</label>
+                        <label className="block text-sm text-gray-600 mb-2">Mô Tả: <span className="text-red-500">*</span></label>
                         <textarea
                             name="description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                             rows={3}
                             className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all resize-none"
                         ></textarea>
@@ -138,14 +160,14 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
                     {/* Row 4: Người giao | Người được giao */}
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm text-gray-600 mb-2">Người giao:</label>
+                            <label className="block text-sm text-gray-600 mb-2">Người giao: <span className="text-red-500">*</span></label>
                             <ManagerSearch
                                 value={manager}
                                 onChange={onManagerChange}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm text-gray-600 mb-2">Người được giao:</label>
+                            <label className="block text-sm text-gray-600 mb-2">Người được giao: <span className="text-red-500">*</span></label>
                             <MemberSelectView
                                 selectedMembers={selectedMembers}
                                 onChange={onMembersChange}
@@ -156,23 +178,21 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
                     <div className="grid grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Thời Gian Thực Hiện:</label>
-                            <input
-                                type="date"
+                            <DateInput
                                 name="startDate"
                                 value={startDate}
                                 min={today}
-                                onChange={(e) => onStartDateChange(e.target.value)}
+                                onChange={onStartDateChange}
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                             />
                         </div>
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Thời Gian Kết Thúc:</label>
-                            <input
-                                type="date"
+                            <DateInput
                                 name="endDate"
                                 value={endDate}
                                 min={startDate}
-                                onChange={(e) => onEndDateChange(e.target.value)}
+                                onChange={onEndDateChange}
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                             />
                         </div>
@@ -219,7 +239,11 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2.5 rounded-lg transition-all shadow-md bg-gradient-to-r from-[#F79E61] to-[#f0884a] text-white hover:from-[#e88d50] hover:to-[#e07d3a] hover:shadow-lg"
+                            disabled={!isFormValid}
+                            className={`px-6 py-2.5 rounded-lg transition-all shadow-md text-white ${isFormValid
+                                ? 'bg-gradient-to-r from-[#F79E61] to-[#f0884a] hover:from-[#e88d50] hover:to-[#e07d3a] hover:shadow-lg cursor-pointer'
+                                : 'bg-gray-300 cursor-not-allowed shadow-none'
+                                }`}
                         >
                             Thêm
                         </button>

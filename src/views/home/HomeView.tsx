@@ -53,7 +53,7 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
               value={data.kpis.completedProjects}
             />
             <KPICard
-              label="Dự án đang thực hiện"
+              label="Công việc đang thực hiện"
               value={data.kpis.inProgressProjects}
             />
           </div>

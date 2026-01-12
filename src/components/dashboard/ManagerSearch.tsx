@@ -66,6 +66,7 @@ const ManagerSearch: React.FC<ManagerSearchProps> = ({
     );
 
     const handleSelect = (member: Member) => {
+        console.log('ManagerSearch handleSelect:', { name: member.name, id: member.id });
         setSearchTerm(member.name);
         onChange(member.name, member.id);
         setIsOpen(false);

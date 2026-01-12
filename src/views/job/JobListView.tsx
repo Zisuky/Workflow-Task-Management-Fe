@@ -32,14 +32,9 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({ columns, onToggle, visi
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-[#46c690] text-white rounded-lg text-sm"
-            >
-                <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                    <span>Tổng Hợp ({visibleCount}/11)</span>
-                </div>
+                className="w-full flex items-center justify-between px-3 py-2 bg-[#46c690] text-white font-normal rounded-lg text-sm">
+                <span className="truncate font-normal">Tổng Hợp ({visibleCount}/12)</span>
+
                 <svg className="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -135,6 +130,22 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ label, options, isActiv
         </div>
     );
 };
+interface FilterState {
+    priority: string;
+    group: string;
+    status: string;
+    manager: string;
+    assignee: string;
+}
+
+interface FilterOptions {
+    priorities: string[];
+    groups: string[];
+    statuses: string[];
+    managers: string[];
+    assignees: string[];
+}
+
 interface JobListViewProps {
     jobs: Job[];
     isLoading: boolean;
@@ -146,7 +157,11 @@ interface JobListViewProps {
     onPageChange: (page: number) => void;
     onItemsPerPageChange: (count: number) => void;
     onJobClick?: (jobId: string) => void;
+    filters: FilterState;
+    onFilterChange: (key: string, value: string) => void;
+    filterOptions: FilterOptions;
 }
+
 const statusColors: Record<JobStatus, string> = {
     'To Do': 'bg-gray-500 text-white',
     'In Progress': 'bg-orange-500 text-white',
@@ -155,6 +170,7 @@ const statusColors: Record<JobStatus, string> = {
     'Done': 'bg-green-500 text-white',
     'On Hold': 'bg-yellow-500 text-white',
 };
+
 const priorityColors: Record<JobPriority, string> = {
     'Low': 'bg-gray-500 text-white',
     'Medium': 'bg-blue-500 text-white',
@@ -162,7 +178,6 @@ const priorityColors: Record<JobPriority, string> = {
     'Highest': 'bg-red-500 text-white',
 };
 
-// Helper function to format date/time to DD/MM/YYYY HH:mm
 const formatDateTime = (dateString: string | undefined): string => {
     if (!dateString) return '-';
     try {
@@ -180,6 +195,7 @@ const formatDateTime = (dateString: string | undefined): string => {
         return dateString;
     }
 };
+
 const COLUMNS_STORAGE_KEY = 'jobListColumns';
 
 const defaultColumns: ColumnConfig[] = [
@@ -202,7 +218,6 @@ const getInitialColumns = (): ColumnConfig[] => {
         const saved = localStorage.getItem(COLUMNS_STORAGE_KEY);
         if (saved) {
             const savedColumns = JSON.parse(saved) as ColumnConfig[];
-            // Merge with default to add any new columns
             return defaultColumns.map(col => {
                 const savedCol = savedColumns.find(s => s.key === col.key);
                 return savedCol ? { ...col, visible: savedCol.visible } : col;
@@ -224,36 +239,19 @@ const JobListView: React.FC<JobListViewProps> = ({
     onPageChange,
     onItemsPerPageChange,
     onJobClick,
+    filters,
+    onFilterChange,
+    filterOptions,
+    totalCount // Added
 }) => {
     const [columns, setColumns] = useState<ColumnConfig[]>(getInitialColumns);
-    const [filters, setFilters] = useState({
-        priority: '',
-        group: '',
-        status: '',
-        manager: '',
-        assignee: ''
-    });
-    const handleFilterChange = (filterType: string, value: string) => {
-        setFilters(prev => ({
-            ...prev,
-            [filterType]: value
-        }));
-    };
-    const filteredJobs = jobs.filter(job => {
-        const matchesSearch = !searchTerm ||
-            job.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            job.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesPriority = !filters.priority || job.priority === filters.priority;
-        const matchesGroup = !filters.group || job.group === filters.group;
-        const matchesStatus = !filters.status || job.status === filters.status;
-        const matchesManager = !filters.manager || job.manager === filters.manager;
-        const matchesAssignee = !filters.assignee || job.assignee === filters.assignee;
-        return matchesSearch && matchesPriority && matchesGroup && matchesStatus && matchesManager && matchesAssignee;
-    });
-    const filteredCount = filteredJobs.length;
-    const totalPages = Math.ceil(filteredCount / itemsPerPage);
+
+    // Removed internal filters state & logic
+
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
     const visibleColumns = columns.filter(col => col.visible);
     const visibleCount = visibleColumns.length;
+
     const toggleColumn = (key: string) => {
         setColumns(prev => {
             const updated = prev.map(col =>
@@ -268,6 +266,7 @@ const JobListView: React.FC<JobListViewProps> = ({
             return updated;
         });
     };
+
     const renderCellContent = (job: Job, columnKey: string) => {
         switch (columnKey) {
             case 'code':
@@ -306,6 +305,7 @@ const JobListView: React.FC<JobListViewProps> = ({
                 return null;
         }
     };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -316,6 +316,7 @@ const JobListView: React.FC<JobListViewProps> = ({
             </div>
         );
     }
+
     return (
         <div className="animate-fadeIn">
             {/* Search and Filters - Same Row, Full Width */}
@@ -336,6 +337,7 @@ const JobListView: React.FC<JobListViewProps> = ({
                             className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61]"
                         />
                     </div>
+
                     {/* Filter Buttons - 3/4 width, divided equally */}
                     <div className="flex-1 grid grid-cols-6 gap-3">
                         <ColumnSelector
@@ -345,37 +347,38 @@ const JobListView: React.FC<JobListViewProps> = ({
                         />
                         <FilterDropdown
                             label="Mức độ ưu tiên"
-                            options={['Low', 'Medium', 'High', 'Highest']}
+                            options={filterOptions.priorities}
                             isActive={!!filters.priority}
-                            onSelect={(value) => handleFilterChange('priority', value)}
+                            onSelect={(value) => onFilterChange('priority', value)}
                         />
                         <FilterDropdown
                             label="Nhóm công việc"
-                            options={['UI/UX', 'Backend', 'Frontend', 'Testing', 'Database', 'Documentation', 'Design']}
+                            options={filterOptions.groups}
                             isActive={!!filters.group}
-                            onSelect={(value) => handleFilterChange('group', value)}
+                            onSelect={(value) => onFilterChange('group', value)}
                         />
                         <FilterDropdown
                             label="Trạng thái"
-                            options={['To Do', 'In Progress', 'In Review', 'Blocked', 'Done']}
+                            options={filterOptions.statuses}
                             isActive={!!filters.status}
-                            onSelect={(value) => handleFilterChange('status', value)}
+                            onSelect={(value) => onFilterChange('status', value)}
                         />
                         <FilterDropdown
                             label="Người phụ trách"
-                            options={['Nguyễn Văn A', 'Lê Văn B', 'Hoàng Thị E', 'Vũ Văn G']}
+                            options={filterOptions.managers}
                             isActive={!!filters.manager}
-                            onSelect={(value) => handleFilterChange('manager', value)}
+                            onSelect={(value) => onFilterChange('manager', value)}
                         />
                         <FilterDropdown
                             label="Người thực hiện"
-                            options={['Trần Thị B', 'Lê Văn B', 'Đỗ Văn F', 'Bùi Thị H']}
+                            options={filterOptions.assignees}
                             isActive={!!filters.assignee}
-                            onSelect={(value) => handleFilterChange('assignee', value)}
+                            onSelect={(value) => onFilterChange('assignee', value)}
                         />
                     </div>
                 </div>
             </div>
+
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -390,7 +393,7 @@ const JobListView: React.FC<JobListViewProps> = ({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {filteredJobs.map((job, index) => (
+                            {jobs.map((job, index) => (
                                 <tr
                                     key={job.id || `job-${index}`}
                                     onClick={() => onJobClick?.(job.id)}
@@ -406,10 +409,11 @@ const JobListView: React.FC<JobListViewProps> = ({
                         </tbody>
                     </table>
                 </div>
+
                 {/* Pagination */}
                 <div className="flex items-center justify-end gap-4 px-4 py-3 border-t border-gray-100">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>Tổng {filteredCount}</span>
+                        <span>Tổng {totalCount}</span>
                         <select
                             value={itemsPerPage}
                             onChange={(e) => onItemsPerPageChange(Number(e.target.value))}

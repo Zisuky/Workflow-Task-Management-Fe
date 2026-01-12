@@ -1,0 +1,131 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# ===== CORS HEADERS =====
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Actor-Id, X-User-Id, X-Company-Id"
+
+# ===== AUTH & EMPLOYEES (https://office.uds.com.vn) =====
+
+[[redirects]]
+  from = "/api/pmcc/v1/auth/*"
+  to = "https://office.uds.com.vn/api/pmcc/v1/auth/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/profiles/*"
+  to = "https://office.uds.com.vn/api/pmcc/v1/profiles/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/employees/*"
+  to = "https://office.uds.com.vn/api/pmcc/v1/employees/:splat"
+  status = 200
+  force = true
+
+# ===== JIRA BACKEND (https://jira-project-api.onrender.com) =====
+
+# Dashboard
+[[redirects]]
+  from = "/api/pmcc/v1/dashboard"
+  to = "https://jira-project-api.onrender.com/api/dashboard"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/dashboard/*"
+  to = "https://jira-project-api.onrender.com/api/dashboard/:splat"
+  status = 200
+  force = true
+
+# Tasks
+[[redirects]]
+  from = "/api/pmcc/v1/tasks"
+  to = "https://jira-project-api.onrender.com/api/tasks"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/tasks/*"
+  to = "https://jira-project-api.onrender.com/api/tasks/:splat"
+  status = 200
+  force = true
+
+# Projects
+[[redirects]]
+  from = "/api/pmcc/v1/projects"
+  to = "https://jira-project-api.onrender.com/api/projects"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/projects/*"
+  to = "https://jira-project-api.onrender.com/api/projects/:splat"
+  status = 200
+  force = true
+
+# Users
+[[redirects]]
+  from = "/api/pmcc/v1/users"
+  to = "https://jira-project-api.onrender.com/api/users"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/users/*"
+  to = "https://jira-project-api.onrender.com/api/users/:splat"
+  status = 200
+  force = true
+
+# Type-tasks
+[[redirects]]
+  from = "/api/pmcc/v1/type-tasks"
+  to = "https://jira-project-api.onrender.com/api/type-tasks"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/type-tasks/*"
+  to = "https://jira-project-api.onrender.com/api/type-tasks/:splat"
+  status = 200
+  force = true
+
+# Task-groups
+[[redirects]]
+  from = "/api/pmcc/v1/task-groups"
+  to = "https://jira-project-api.onrender.com/api/task-groups"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/task-groups/*"
+  to = "https://jira-project-api.onrender.com/api/task-groups/:splat"
+  status = 200
+  force = true
+
+# History
+[[redirects]]
+  from = "/api/pmcc/v1/history"
+  to = "https://jira-project-api.onrender.com/api/history"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/pmcc/v1/history/*"
+  to = "https://jira-project-api.onrender.com/api/history/:splat"
+  status = 200
+  force = true
+
+# ===== SPA FALLBACK =====
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

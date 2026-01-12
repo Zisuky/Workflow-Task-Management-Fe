@@ -1,4 +1,5 @@
 import type { Member } from '../../data/members.data';
+import DateInput from '../../components/common/DateInput';
 interface AddProjectModalViewProps {
     isOpen: boolean;
     isFormValid: boolean;
@@ -74,23 +75,21 @@ const AddProjectModalView: React.FC<AddProjectModalViewProps> = ({
                     <div className="grid grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Thời Gian Thực Hiện:</label>
-                            <input
-                                type="date"
+                            <DateInput
                                 name="startDate"
                                 value={startDate}
                                 min={today}
-                                onChange={(e) => onStartDateChange(e.target.value)}
+                                onChange={onStartDateChange}
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                             />
                         </div>
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Thời Gian Kết Thúc:</label>
-                            <input
-                                type="date"
+                            <DateInput
                                 name="endDate"
                                 value={endDate}
                                 min={startDate}
-                                onChange={(e) => onEndDateChange(e.target.value)}
+                                onChange={onEndDateChange}
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                             />
                         </div>

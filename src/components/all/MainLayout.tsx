@@ -33,7 +33,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         if (pathname === '/chart') {
             return 'Báo cáo';
         }
-        if (pathname === '/dashboard') {
+        if (pathname === '/dashboard' || pathname === '/project') {
             return 'Quản lý dự án';
         }
         if (pathname.includes('/job')) {

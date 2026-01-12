@@ -175,13 +175,12 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
     try {
       await commentApi.create(job.id, newComment.trim());
       setNewComment('');
-      await loadComments(); // Reload comments
+      await loadComments();
     } catch (err) {
       console.error('Failed to add comment:', err);
     }
   };
 
-  // Get display names from IDs
   const selectedType = typesList.find(t => t.id === selectedTypeId);
   const selectedGroup = groupsList.find(g => g.id === selectedGroupId);
 
@@ -391,11 +390,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   <UserIcon />
                   <span>Người thực hiện</span>
                 </div>
-                <div className="person-row">
-                  <div className="avatar-small avatar-green">
-                    {getInitials(job.assignee)}
-                  </div>
-                  <span className="person-name-text">{job.assignee}</span>
+                <div className="person-name-text" style={{ maxHeight: '80px', overflowY: 'auto' }}>
+                  {job.assignee}
                 </div>
               </div>
             </div>

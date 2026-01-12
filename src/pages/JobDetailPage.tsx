@@ -3,9 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { jobService } from '../services';
 import type { Job } from '../models';
 import { JobDetailView, type JobUpdateData } from '../views/job';
+import { useToast } from '../ui/toast';
+
 const JobDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const toast = useToast();
     const [job, setJob] = useState<Job | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     useEffect(() => {
@@ -50,11 +53,11 @@ const JobDetailPage: React.FC = () => {
                     typeId: data.typeId,
                     taskGroupId: data.taskGroupId,
                 });
-                alert('Cập nhật thành công!');
+                toast.success('Cập nhật thành công');
             }
         } catch (error) {
             console.error('Failed to update job:', error);
-            alert('Cập nhật thất bại!');
+            toast.error('Cập nhật thất bại');
         }
     };
     const handleDelete = async () => {
@@ -62,9 +65,11 @@ const JobDetailPage: React.FC = () => {
         if (window.confirm('Bạn có chắc chắn muốn xóa công việc này?')) {
             try {
                 await jobService.deleteJob(job.id);
+                toast.success('Xóa thành công');
                 navigate('/job');
             } catch (error) {
                 console.error('Failed to delete job:', error);
+                toast.error('Xóa thất bại');
             }
         }
     };

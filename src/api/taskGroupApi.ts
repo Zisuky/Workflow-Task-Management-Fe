@@ -26,6 +26,19 @@ export const taskGroupApi = {
     async getById(id: string): Promise<ApiResponse<TaskGroup>> {
         return api.get(`/task-groups/${id}`);
     },
+
+    async create(taskGroup: Omit<TaskGroup, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<TaskGroup>> {
+        return api.post('/task-groups', taskGroup);
+    },
+
+    async update(id: string, taskGroup: Partial<TaskGroup>): Promise<ApiResponse<TaskGroup>> {
+        return api.put(`/task-groups/${id}`, taskGroup);
+    },
+
+    async delete(id: string): Promise<ApiResponse<void>> {
+        return api.delete(`/task-groups/${id}`);
+    },
 };
 
 export default taskGroupApi;
+

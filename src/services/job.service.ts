@@ -84,8 +84,6 @@ export const getGroupName = async (groupId: string): Promise<string> => {
     return 'Backend';
 };
 
-// Status mapping: BE -> FE
-// BE only has: NOT_STARTED, IN_PROGRESS, COMPLETED
 const beToFeStatus: Record<string, Job['status']> = {
     'NOT_STARTED': 'To Do',
     'IN_PROGRESS': 'In Progress',
@@ -95,19 +93,15 @@ const beToFeStatus: Record<string, Job['status']> = {
     'ON_HOLD': 'On Hold',
 };
 
-// Status mapping: FE -> BE
-// Note: DB has CHECK Constraint allowing only: NOT_STARTED, IN_PROGRESS, COMPLETED
 const feToBEStatus: Record<Job['status'], string> = {
     'To Do': 'NOT_STARTED',
     'In Progress': 'IN_PROGRESS',
-    // Map Check Constraint violators back to allowed values
-    'In Review': 'IN_PROGRESS', // Or NOT_STARTED depending on logic
-    'Blocked': 'NOT_STARTED',   // Treat as To Do
-    'On Hold': 'NOT_STARTED',   // Treat as To Do
+    'In Review': 'IN_PROGRESS',
+    'Blocked': 'NOT_STARTED',
+    'On Hold': 'NOT_STARTED',
     'Done': 'COMPLETED',
 };
 
-// Priority mapping: BE -> FE
 const beTofePriority: Record<string, Job['priority']> = {
     'UNKNOWN': 'Low',
     'LOW': 'Low',
@@ -115,8 +109,9 @@ const beTofePriority: Record<string, Job['priority']> = {
     'HIGH': 'High',
 };
 
+
+
 const mapToJob = async (task: TaskResponse): Promise<Job> => {
-    // Fetch related names
     const [managerName, assigneeName, projectName, typeName, groupName] = await Promise.all([
         getEmployeeName(task.assignerId),
         getEmployeeName(task.assigneeId),
@@ -153,7 +148,6 @@ export const jobService = {
         if (USE_REAL_API) {
             try {
                 const response = await taskApi.getAll();
-                // Map all tasks with async employee name resolution
                 const jobs = await Promise.all(response.data.map(mapToJob));
                 return jobs;
             } catch (error) {
@@ -183,7 +177,6 @@ export const jobService = {
         if (USE_REAL_API) {
             try {
                 const response = await taskApi.getByProject(projectId);
-                // Must use Promise.all because mapToJob is async
                 const jobs = await Promise.all(response.data.map(mapToJob));
                 return jobs;
             } catch (error) {
@@ -215,14 +208,12 @@ export const jobService = {
     async updateJob(id: string, updates: Partial<Job>): Promise<Job | undefined> {
         if (USE_REAL_API) {
             try {
-                // If only status is being updated, use dedicated status endpoint
                 if (updates.status && Object.keys(updates).filter(k => updates[k as keyof Job] !== undefined).length === 1) {
                     const beStatus = feToBEStatus[updates.status];
                     const response = await taskApi.updateStatus(id, beStatus);
                     return mapToJob(response.data);
                 }
 
-                // For full updates, first get existing task to preserve required fields
                 const existingResponse = await taskApi.getById(id);
                 const existingTask = existingResponse.data;
 
@@ -237,7 +228,6 @@ export const jobService = {
                     assigneeId: existingTask.assigneeId,
                     assignerId: existingTask.assignerId,
                     projectId: existingTask.projectId,
-                    // Use new IDs if provided, otherwise keep existing
                     taskGroupId: updates.taskGroupId || existingTask.taskGroupId,
                     typeId: updates.typeId || existingTask.typeId,
                     startDate: existingTask.startDate,
@@ -263,12 +253,10 @@ export const jobService = {
             try {
                 const priority = input.priority ? input.priority.toUpperCase() : 'MEDIUM';
 
-                // Fetch real UUIDs from BE if not provided in input
                 let projectId = input.projectId;
                 let taskGroupId = input.taskGroupId;
                 let typeId = input.typeId;
 
-                // Get first available project if not specified
                 if (!projectId) {
                     try {
                         const projectsRes = await projectApi.getAll();
@@ -280,7 +268,6 @@ export const jobService = {
                     }
                 }
 
-                // Get first available task type if not specified
                 if (!typeId) {
                     try {
                         const typesRes = await taskTypeApi.getAll();
@@ -292,7 +279,6 @@ export const jobService = {
                     }
                 }
 
-                // Get first available task group (by project) if not specified
                 if (!taskGroupId && projectId) {
                     try {
                         const groupsRes = await taskGroupApi.getByProjectId(projectId);
@@ -304,7 +290,6 @@ export const jobService = {
                     }
                 }
 
-                // If still no taskGroupId, try getting all task groups
                 if (!taskGroupId) {
                     try {
                         const allGroupsRes = await taskGroupApi.getAll();
@@ -316,14 +301,25 @@ export const jobService = {
                     }
                 }
 
-                // Validate we have required UUIDs
                 if (!projectId || !typeId || !taskGroupId) {
                     throw new Error(`Missing required IDs: projectId=${projectId}, typeId=${typeId}, taskGroupId=${taskGroupId}`);
                 }
 
-                // Use assignerId/assigneeId from input or default to current user
-                const assignerId = input.assignerId || input.manager || 'system';
-                const assigneeId = input.assigneeId || input.assignee || 'system';
+                let assignerId = input.assignerId;
+                if (!assignerId) {
+                    try {
+                        const currentUser = await employeeApi.getCurrentUser();
+                        if (currentUser?.id) {
+                            assignerId = currentUser.id;
+                            console.log('Using current user ID for assignerId:', assignerId);
+                        }
+                    } catch (e) {
+                        console.warn('Failed to get current user:', e);
+                    }
+                }
+                assignerId = assignerId || 'system';
+
+                const assigneeId = input.assigneeId || 'system';
 
                 const response = await taskApi.create({
                     name: input.name,
@@ -335,7 +331,7 @@ export const jobService = {
                     typeId: typeId,
                     assignerId: assignerId,
                     assigneeId: assigneeId,
-                    userUpdateId: assignerId, // Required by DB - use assigner as updater
+                    userUpdateId: assignerId,
                     startDate: input.startDate ? `${input.startDate}T00:00:00` : null,
                     endDate: input.endDate ? `${input.endDate}T23:59:59` : null,
                 });

@@ -1,9 +1,5 @@
 import axios from 'axios';
 
-/* =========================
-   AXIOS INSTANCE
-========================= */
-
 const externalApi = axios.create({
     baseURL: '/api/pmcc/v1',
     headers: {

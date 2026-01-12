@@ -14,7 +14,7 @@ export interface Project {
 }
 export interface CreateProjectInput {
     name: string;
-    code?: string; // Optional as backend generates it
+    code?: string;
     group: string;
     description: string;
     manager: string;

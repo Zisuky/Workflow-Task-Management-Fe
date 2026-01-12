@@ -5,13 +5,24 @@ import AddJobModal from './components/job/AddJobModal';
 import { DashboardPage, LoginPage, JobListPage, JobDetailPage, TimelinePage, HomePage } from './pages';
 import { projectService, authService, jobService } from './services';
 import type { User, CreateJobInput, CreateProjectInput } from './models';
+import { ToastProvider, useToast } from './ui/toast';
+
 function App() {
+  return (
+    <ToastProvider>
+      <AppWithToast />
+    </ToastProvider>
+  );
+}
+
+function AppWithToast() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const toast = useToast();
 
 
   useEffect(() => {
@@ -41,19 +52,23 @@ function App() {
       await jobService.addJob(input);
       setIsJobModalOpen(false);
       setRefreshKey(prev => prev + 1);
+      toast.success('Tạo công việc thành công');
     } catch (error) {
       console.error('Failed to add job:', error);
+      toast.error('Tạo công việc thất bại');
     }
-  }, []);
+  }, [toast]);
   const handleAddProject = useCallback(async (input: CreateProjectInput) => {
     try {
       await projectService.addProject(input);
       setIsProjectModalOpen(false);
       setRefreshKey(prev => prev + 1);
+      toast.success('Tạo dự án thành công');
     } catch (error) {
       console.error('Failed to add project:', error);
+      toast.error('Tạo dự án thất bại');
     }
-  }, []);
+  }, [toast]);
 
   if (isLoading) {
     return (
@@ -152,8 +167,8 @@ const AppContent: React.FC<{
             <Route path="/home" element={<HomePage />} />
             <Route path="/project" element={<DashboardPage key={refreshKey} />} />
             <Route path="/dashboard" element={<DashboardPage key={refreshKey} />} />
-            <Route path="/job" element={<JobListPage />} />
-            <Route path="/job/timeline" element={<TimelinePage />} />
+            <Route path="/job" element={<JobListPage key={refreshKey} />} />
+            <Route path="/job/timeline" element={<TimelinePage key={refreshKey} />} />
             <Route path="/job/:id" element={<JobDetailPage />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/login" element={<Navigate to="/home" replace />} />
@@ -172,6 +187,7 @@ const AppContent: React.FC<{
           onClose={() => setIsProjectModalOpen(false)}
           onSubmit={handleAddProject}
           defaultManager={currentUser?.name || ''}
+          defaultManagerId={currentUser?.id || ''}
         />
       </>
     );

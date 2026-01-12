@@ -20,7 +20,7 @@ const calculateWorkingDays = (startDate: string, endDate: string): number => {
 };
 const calculateEstimatedHours = (startDate: string, endDate: string): number => {
     const workingDays = calculateWorkingDays(startDate, endDate);
-    return workingDays * 8; // 8 hours per working day
+    return workingDays * 8;
 };
 interface AddJobModalProps {
     isOpen: boolean;
@@ -29,8 +29,9 @@ interface AddJobModalProps {
     defaultManager?: string;
     defaultProjectId?: string;
 }
-const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, defaultManager = '', defaultProjectId }) => {
-    const [manager, setManager] = useState(defaultManager);
+const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, defaultProjectId }) => {
+    const [manager, setManager] = useState('');
+    const [managerId, setManagerId] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
     const today = new Date().toISOString().split('T')[0];
     const [startDate, setStartDate] = useState(today);
@@ -38,20 +39,33 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
     const [estimatedHours, setEstimatedHours] = useState(8);
     useEffect(() => {
         if (isOpen) {
-            setManager(defaultManager);
+            setManager('');
+            setManagerId('');
             setSelectedMembers([]);
             setStartDate(today);
             setEndDate(today);
             setEstimatedHours(8);
         }
-    }, [defaultManager, isOpen, today]);
+    }, [isOpen, today]);
     useEffect(() => {
         const calculatedHours = calculateEstimatedHours(startDate, endDate);
         setEstimatedHours(calculatedHours);
     }, [startDate, endDate]);
+
+    const handleManagerChange = (name: string, id?: string) => {
+        setManager(name);
+        setManagerId(id || '');
+    };
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
+
+        console.log('Submitting with:', {
+            managerId,
+            assigneeIds: selectedMembers.map(m => m.id).join(',')
+        });
+
         const input: CreateJobInput = {
             name: formData.get('name') as string,
             type: formData.get('type') as JobType,
@@ -60,10 +74,13 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
             description: formData.get('description') as string,
             manager: manager,
             assignee: selectedMembers.map(m => m.name).join(', '),
+            assignerId: managerId,
+            assigneeId: selectedMembers.map(m => m.id).join(','),
             startDate: startDate,
             endDate: endDate,
             estimatedHours: estimatedHours,
             priority: formData.get('priority') as JobPriority,
+
             code: 'JOB-' + Math.floor(Math.random() * 1000),
         };
         onSubmit(input);
@@ -89,7 +106,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
             onClose={onClose}
             onSubmit={handleSubmit}
             manager={manager}
-            onManagerChange={setManager}
+            onManagerChange={handleManagerChange}
             selectedMembers={selectedMembers}
             onMembersChange={setSelectedMembers}
             startDate={startDate}
@@ -102,3 +119,4 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
     );
 };
 export default AddJobModal;
+

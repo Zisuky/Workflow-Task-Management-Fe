@@ -3,13 +3,10 @@ import { projectApi, type ProjectResponse, type ProjectMemberResponse } from '..
 import { employeeApi, type Employee } from '../api/employeeApi';
 import { mockProjects } from '../data';
 
-// Flag để chuyển đổi giữa mock data và API thật
 const USE_REAL_API = true;
 
-// Cache employees để tránh gọi API nhiều lần
 let employeesCache: Employee[] | null = null;
 
-// Lấy employees từ cache hoặc API
 const getEmployees = async (): Promise<Employee[]> => {
     if (!employeesCache) {
         employeesCache = await employeeApi.getAll();
@@ -17,23 +14,18 @@ const getEmployees = async (): Promise<Employee[]> => {
     return employeesCache;
 };
 
-// Tìm tên employee theo ID
 const getEmployeeName = (employees: Employee[], userId: string): string => {
     const employee = employees.find(e => e.id === userId);
     return employee?.name || userId;
 };
 
-// Mapper: chuyển đổi BE ProjectResponse sang FE Project
 const mapToProject = (
     response: ProjectResponse,
     members: ProjectMemberResponse[],
     employees: Employee[]
 ): Project => {
-    // Manager: Use leaderId of the first member (as it seems duplicated or global for project)
     const leaderId = members.length > 0 ? members[0].leaderId : null;
     const managerName = leaderId ? getEmployeeName(employees, leaderId) : 'Chưa có';
-
-    // Assignee: Map each member's userId to a name
     const assignees = members.length > 0
         ? members.map(m => getEmployeeName(employees, m.userId)).join(', ')
         : 'Chưa có';
@@ -52,7 +44,6 @@ const mapToProject = (
     };
 };
 
-// Simple mapper cho các trường hợp không cần load members
 const simpleMapToProject = (response: ProjectResponse): Project => ({
     id: response.id,
     code: response.projectCode,
@@ -74,12 +65,8 @@ export const projectService = {
     async getProjects(): Promise<Project[]> {
         if (USE_REAL_API) {
             try {
-                const response = await projectApi.getAll();
-
-                // Lấy danh sách employees một lần
+                const response = await projectApi.getAll()
                 const employees = await getEmployees();
-
-                // Load members cho mỗi project
                 const projectsList = await Promise.all(
                     response.data.map(async (projectResponse) => {
                         try {
@@ -91,12 +78,10 @@ export const projectService = {
                     })
                 );
 
-                // Load isPinned status for each project
                 const userStr = localStorage.getItem('user');
                 const userId = userStr ? JSON.parse(userStr).id : null;
 
                 if (userId) {
-                    // Check pin status for each project in parallel
                     const pinChecks = await Promise.allSettled(
                         projectsList.map(async (project) => {
                             try {
@@ -108,7 +93,6 @@ export const projectService = {
                         })
                     );
 
-                    // Update projects with pin status
                     pinChecks.forEach((result, index) => {
                         if (result.status === 'fulfilled') {
                             projectsList[index].isPinned = result.value.isPinned;
@@ -143,7 +127,6 @@ export const projectService = {
     async addProject(input: CreateProjectInput): Promise<Project> {
         if (USE_REAL_API) {
             try {
-                // Sử dụng leaderId và memberIds từ form, fallback nếu không có
                 const userStr = localStorage.getItem('user');
                 const user = userStr ? JSON.parse(userStr) : null;
                 const fallbackUserId = user?.id || 'system';
@@ -151,9 +134,9 @@ export const projectService = {
                 const response = await projectApi.create({
                     name: input.name,
                     description: input.description || '',
-                    companyId: '60d0fe4f5311236168a109ca', // Default Company ID
-                    leaderId: input.leaderId || fallbackUserId, // Trưởng dự án từ form
-                    memberIds: input.memberIds || [], // Thành viên từ form
+                    companyId: '60d0fe4f5311236168a109ca',
+                    leaderId: input.leaderId || fallbackUserId,
+                    memberIds: input.memberIds || [],
                 });
                 return simpleMapToProject(response.data);
             } catch (error) {
@@ -218,22 +201,17 @@ export const projectService = {
     async togglePin(id: string): Promise<Project | null> {
         if (USE_REAL_API) {
             try {
-                // Get userId from localStorage
                 const userStr = localStorage.getItem('user');
                 const userId = userStr ? JSON.parse(userStr).id : '60d0fe4f5311236168a109ca';
-
-                // First check if project is currently pinned
                 const isPinnedResponse = await projectApi.isPinned(id, userId);
                 const currentlyPinned = isPinnedResponse.data;
 
-                // Toggle: if pinned -> unpin, if not pinned -> pin
                 if (currentlyPinned) {
                     await projectApi.unpin(id, userId);
                 } else {
                     await projectApi.pin(id, userId);
                 }
 
-                // Return updated project state
                 const projectResponse = await projectApi.getById(id);
                 const project = simpleMapToProject(projectResponse.data);
                 project.isPinned = !currentlyPinned;
@@ -242,7 +220,6 @@ export const projectService = {
                 console.error('Pin API Error, falling back to mock:', error);
             }
         }
-        // Fallback to mock
         await new Promise((resolve) => setTimeout(resolve, 100));
         const project = projects.find(p => p.id === id);
         if (project) {

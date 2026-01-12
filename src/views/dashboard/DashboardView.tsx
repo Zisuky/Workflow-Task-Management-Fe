@@ -10,6 +10,7 @@ interface DashboardViewProps {
     onTogglePin: (id: string) => void;
     onLoadMore: () => void;
     onProjectClick?: (project: Project) => void;
+    onViewDetail?: (project: Project) => void;
 }
 const DashboardView: React.FC<DashboardViewProps> = ({
     isLoading,
@@ -21,6 +22,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     onTogglePin,
     onLoadMore,
     onProjectClick,
+    onViewDetail,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
@@ -85,11 +87,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({
             <div ref={scrollContainerRef} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-slideUp max-h-[600px] flex flex-col">
                 <div className="bg-gradient-to-r from-[#F79E61] to-[#f0884a] text-white sticky top-0 z-10 flex-shrink-0">
                     <div className="grid grid-cols-12 gap-4 px-6 py-4 text-sm font-semibold">
+                        <div className="col-span-1 text-center">Ghim</div>
                         <div className="col-span-2">Mã Dự Án</div>
                         <div className="col-span-3">Tên Dự Án</div>
-                        <div className="col-span-3">Người Phụ Trách</div>
-                        <div className="col-span-3">Người Thực Hiện</div>
-                        <div className="col-span-1 text-center">Ghim</div>
+                        <div className="col-span-2">Người Phụ Trách</div>
+                        <div className="col-span-2">Người Thực Hiện</div>
+                        <div className="col-span-2 text-center">Thao tác</div>
                     </div>
                 </div>
                 <div className="divide-y divide-gray-100 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-gray-50 hover:scrollbar-thumb-orange-300">
@@ -100,10 +103,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                             className="grid grid-cols-12 gap-4 px-6 py-4 text-sm hover:bg-orange-50/50 transition-colors duration-200 cursor-pointer group animate-slideUp"
                             style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
                         >
-                            <div className="col-span-2 text-[#F79E61] font-medium group-hover:text-[#e88d50] transition-colors">{project.code}</div>
-                            <div className="col-span-3 text-gray-800 font-medium">{project.name}</div>
-                            <div className="col-span-3 text-gray-600">{project.manager}</div>
-                            <div className="col-span-3 text-gray-600">{project.assignee}</div>
                             <div className="col-span-1 flex justify-center">
                                 <button
                                     onClick={(e) => { e.stopPropagation(); onTogglePin(project.id); }}
@@ -114,6 +113,18 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                     )}
+                                </button>
+                            </div>
+                            <div className="col-span-2 text-[#F79E61] font-medium group-hover:text-[#e88d50] transition-colors">{project.code}</div>
+                            <div className="col-span-3 text-gray-800 font-medium">{project.name}</div>
+                            <div className="col-span-2 text-gray-600 truncate">{project.manager}</div>
+                            <div className="col-span-2 text-gray-600 truncate">{project.assignee}</div>
+                            <div className="col-span-2 flex justify-center">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onViewDetail?.(project); }}
+                                    className="px-3 py-1.5 text-xs font-medium rounded-lg bg-gradient-to-r from-[#F79E61] to-[#f0884a] text-white hover:from-[#e88d50] hover:to-[#e07d3a] transition-all shadow-sm hover:shadow-md"
+                                >
+                                    Xem chi tiết
                                 </button>
                             </div>
                         </div>

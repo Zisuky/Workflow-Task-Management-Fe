@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Job, JobStatus, JobPriority } from '../../models';
+import { EditableSelect } from '../../components/ui/EditableSelect';
 interface ColumnConfig {
     key: string;
     label: string;
@@ -40,12 +41,12 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({ columns, onToggle, visi
                 </svg>
             </button>
             {isOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[250px]">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[500px]">
                     <div className="p-3">
                         <div className="text-sm font-medium text-gray-700 mb-3">HIỂN THỊ CỘT</div>
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-3 gap-2">
                             {columns.map((column) => (
-                                <label key={column.key} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                <label key={column.key} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                                     <div className="relative">
                                         <input
                                             type="checkbox"
@@ -64,7 +65,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({ columns, onToggle, visi
                                             )}
                                         </div>
                                     </div>
-                                    <span className="text-sm text-gray-700">{column.label}</span>
+                                    <span className="text-sm text-gray-700 whitespace-nowrap">{column.label}</span>
                                 </label>
                             ))}
                         </div>
@@ -242,11 +243,10 @@ const JobListView: React.FC<JobListViewProps> = ({
     filters,
     onFilterChange,
     filterOptions,
-    totalCount // Added
+    totalCount, // Added
 }) => {
     const [columns, setColumns] = useState<ColumnConfig[]>(getInitialColumns);
 
-    // Removed internal filters state & logic
 
     const totalPages = Math.ceil(totalCount / itemsPerPage);
     const visibleColumns = columns.filter(col => col.visible);
@@ -257,7 +257,6 @@ const JobListView: React.FC<JobListViewProps> = ({
             const updated = prev.map(col =>
                 col.key === key ? { ...col, visible: !col.visible } : col
             );
-            // Save to localStorage
             try {
                 localStorage.setItem(COLUMNS_STORAGE_KEY, JSON.stringify(updated));
             } catch (error) {
@@ -351,10 +350,10 @@ const JobListView: React.FC<JobListViewProps> = ({
                             isActive={!!filters.priority}
                             onSelect={(value) => onFilterChange('priority', value)}
                         />
-                        <FilterDropdown
+                        <EditableSelect
                             label="Nhóm công việc"
+                            value={filters.group}
                             options={filterOptions.groups}
-                            isActive={!!filters.group}
                             onSelect={(value) => onFilterChange('group', value)}
                         />
                         <FilterDropdown
@@ -363,16 +362,16 @@ const JobListView: React.FC<JobListViewProps> = ({
                             isActive={!!filters.status}
                             onSelect={(value) => onFilterChange('status', value)}
                         />
-                        <FilterDropdown
+                        <EditableSelect
                             label="Người phụ trách"
+                            value={filters.manager}
                             options={filterOptions.managers}
-                            isActive={!!filters.manager}
                             onSelect={(value) => onFilterChange('manager', value)}
                         />
-                        <FilterDropdown
+                        <EditableSelect
                             label="Người thực hiện"
+                            value={filters.assignee}
                             options={filterOptions.assignees}
-                            isActive={!!filters.assignee}
                             onSelect={(value) => onFilterChange('assignee', value)}
                         />
                     </div>

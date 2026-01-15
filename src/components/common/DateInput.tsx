@@ -112,24 +112,24 @@ const DateInput: React.FC<DateInputProps> = ({
                 placeholder="DD/MM/YYYY"
                 className={`${className} pr-10`}
             />
+            <button
+                type="button"
+                onClick={handleCalendarClick}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer z-10"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </button>
             <input
                 ref={hiddenDateRef}
                 type="date"
                 value={value}
                 min={min}
                 onChange={handleDatePickerChange}
-                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                className="absolute right-0 top-0 opacity-0 w-10 h-full cursor-pointer"
                 style={{ colorScheme: 'light' }}
             />
-            <button
-                type="button"
-                onClick={handleCalendarClick}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 pointer-events-none"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            </button>
             {/* Hidden input to submit ISO format */}
             <input type="hidden" name={`${name}_iso`} value={value} />
         </div>

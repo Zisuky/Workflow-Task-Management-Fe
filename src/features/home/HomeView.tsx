@@ -78,7 +78,7 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
                     </div>
                   </div>
                 </div>
-                <div className="h-[280px]">
+                <div className="h-[280px] !border-none !outline-none">
                   <ProductivityLineChart data={data.productivity} />
                 </div>
               </div>
@@ -124,7 +124,7 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
           {/* Task Status Donut */}
           <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <h3 className="text-base font-semibold text-[#111827] mb-4">Tỷ lệ task theo trạng thái</h3>
-            <div className="h-56 flex items-center justify-center">
+            <div className="h-56 flex items-center justify-center !border-none !outline-none">
               <TaskStatusDonut data={data.taskStatus} />
             </div>
           </div>
@@ -133,7 +133,7 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
         {/* 4. Department Bar Chart - Full width */}
         <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
           <h3 className="text-base font-semibold text-[#111827] mb-4">Số lượng task theo phòng ban</h3>
-          <div className="h-64">
+          <div className="h-64 !border-none !outline-none">
             <DepartmentBarChart data={data.departmentTasks} />
           </div>
         </div>

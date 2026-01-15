@@ -9,13 +9,23 @@ export interface TaskResponse {
     status: string;
     priority: string;
     assignerId: string;
-    assigneeId: string;
+    assigneeId: string | string[];  // Can be string or array
     startDate: string | null;
     endDate: string | null;
     actualStartDate: string | null;
     actualEndDate: string | null;
     note: string | null;
     userUpdateId: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface TaskMemberResponse {
+    id: string;
+    taskId: string;
+    userId: string;
+    role: 'LEADER' | 'MEMBER';
+    leaderId: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -43,6 +53,10 @@ export const taskApi = {
         return api.get(`/tasks/assignee/${assigneeId}`);
     },
 
+    async getMembers(taskId: string): Promise<ApiResponse<TaskMemberResponse[]>> {
+        return api.get(`/tasks/${taskId}/members`);
+    },
+
     async create(task: Partial<TaskResponse>): Promise<ApiResponse<TaskResponse>> {
         return api.post('/tasks', task);
     },
@@ -61,3 +75,4 @@ export const taskApi = {
 };
 
 export default taskApi;
+

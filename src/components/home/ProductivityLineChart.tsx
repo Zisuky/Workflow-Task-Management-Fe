@@ -34,16 +34,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const ProductivityLineChart: React.FC<ProductivityLineChartProps> = ({ data }) => {
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height="100%" className="!border-none !outline-none ring-0 shadow-none">
       <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-        <XAxis 
-          dataKey="month" 
+        <XAxis
+          dataKey="month"
           axisLine={false}
           tickLine={false}
           tick={{ fontSize: 12, fill: '#6B7280' }}
         />
-        <YAxis 
+        <YAxis
           axisLine={false}
           tickLine={false}
           tick={{ fontSize: 12, fill: '#6B7280' }}
@@ -51,17 +51,17 @@ const ProductivityLineChart: React.FC<ProductivityLineChartProps> = ({ data }) =
           ticks={[0, 9, 18, 27, 36]}
         />
         <Tooltip content={<CustomTooltip />} />
-        <Line 
-          type="monotone" 
-          dataKey="total" 
-          stroke="#9CA3AF" 
+        <Line
+          type="monotone"
+          dataKey="total"
+          stroke="#9CA3AF"
           strokeWidth={2}
           dot={{ fill: '#9CA3AF', strokeWidth: 0, r: 4 }}
         />
-        <Line 
-          type="monotone" 
-          dataKey="completed" 
-          stroke="#111827" 
+        <Line
+          type="monotone"
+          dataKey="completed"
+          stroke="#111827"
           strokeWidth={2}
           dot={{ fill: '#111827', strokeWidth: 0, r: 4 }}
         />

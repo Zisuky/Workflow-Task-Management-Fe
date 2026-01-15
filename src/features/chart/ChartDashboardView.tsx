@@ -84,12 +84,12 @@ const ChartDashboardView: React.FC<ChartDashboardViewProps> = ({ data, isLoading
               {/* Row 1: Task Status & Priority Count */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <ChartCard title="Tỷ lệ công việc theo trạng thái">
-                  <div className="h-72 flex items-center justify-center">
+                  <div className="h-72 flex items-center justify-center !border-none !outline-none">
                     <TaskStatusChart data={data.taskStatus} />
                   </div>
                 </ChartCard>
                 <ChartCard title="Số lượng công việc theo mức độ ưu tiên">
-                  <div className="h-64 overflow-y-auto">
+                  <div className="h-64 overflow-y-auto !border-none !outline-none">
                     <PriorityCountCard data={data.priorityCount} />
                   </div>
                 </ChartCard>
@@ -110,7 +110,7 @@ const ChartDashboardView: React.FC<ChartDashboardViewProps> = ({ data, isLoading
                     </div>
                   </div>
                 </div>
-                <div className="h-64 flex-1">
+                <div className="h-64 flex-1 !border-none !outline-none">
                   <ProductivityChart data={data.productivity} />
                 </div>
               </div>

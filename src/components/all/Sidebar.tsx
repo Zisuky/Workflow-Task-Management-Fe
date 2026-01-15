@@ -17,8 +17,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, onLogo
         if (path === '/home' || path === '/') return 'home';
         if (path === '/project' || path.includes('/project')) return 'projects';
         if (path === '/dashboard' || path.includes('/dashboard')) return 'projects';
-        if (path === '/chart' || path.includes('/chart')) return 'reports';
+        if (path === '/template' || path.includes('/template')) return 'reports';
         if (path.includes('/job')) return 'tasks';
+        if (path.includes('/workflow')) return 'flowwork';
         if (path.includes('/calendar')) return 'calendar';
         if (path.includes('/settings')) return 'settings';
         return 'home';
@@ -38,10 +39,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, onLogo
                 navigate('/calendar');
                 break;
             case 'reports':
-                navigate('/chart');
+                navigate('/template');
                 break;
             case 'settings':
                 navigate('/settings');
+                break;
+            case 'flowwork':
+                navigate('/workflow');
                 break;
             default:
                 break;

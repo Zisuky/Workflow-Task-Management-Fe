@@ -6,6 +6,7 @@ interface MainLayoutProps {
     onLogout?: () => void;
     onAddJob?: () => void;
     onAddProject?: () => void;
+    onAddTemplate?: () => void;
     onBack?: () => void;
     onTimeline?: () => void;
     onTimeFilterChange?: (filter: string) => void;
@@ -16,6 +17,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     onLogout,
     onAddJob,
     onAddProject,
+    onAddTemplate,
     onBack,
     onTimeline,
     onTimeFilterChange,
@@ -36,15 +38,30 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         if (pathname === '/dashboard' || pathname === '/project') {
             return 'Quản lý dự án';
         }
+        if (pathname === '/home' || pathname === '/') {
+            return 'Trang chủ';
+        }
+        if (pathname.includes('/workflow')) {
+            return 'Workflow';
+        }
         if (pathname.includes('/job')) {
             return 'Quản lý công việc';
         }
+        if (pathname.includes('/template')) {
+            return 'Template';
+        }
+        if (pathname.includes('/settings')) {
+            return 'Cài đặt';
+        }
         return 'Trang chủ';
+
     };
     const isJobPage = location.pathname === '/job';
     const isJobDetailPage = location.pathname.match(/^\/job\/[^/]+$/);
     const isTimelinePage = location.pathname === '/job/timeline';
     const isChartPage = location.pathname === '/chart';
+    const isWorkflowPage = location.pathname.includes('/workflow');
+    const isTemplatePage = location.pathname.includes('/template');
     const isHomePage = location.pathname === '/home' || location.pathname === '/';
     return (
         <MainLayoutView
@@ -53,11 +70,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             onLogout={onLogout || (() => { })}
             onAddJob={onAddJob || (() => { })}
             onAddProject={onAddProject || (() => { })}
+            onAddTemplate={onAddTemplate || (() => { })}
             onBack={onBack}
             onTimeline={onTimeline}
             isJobPage={isJobPage}
             isChartPage={isChartPage}
             isHomePage={isHomePage}
+            isWorkflowPage={isWorkflowPage}
+            isTemplatePage={isTemplatePage}
             showBackButton={!!(isJobDetailPage || isTimelinePage)}
             title={getPageTitle(location.pathname)}
             onTimeFilterChange={onTimeFilterChange}

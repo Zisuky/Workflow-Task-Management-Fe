@@ -1,6 +1,7 @@
 import type { Project, CreateProjectInput } from '../models';
 import { projectApi, type ProjectResponse, type ProjectMemberResponse } from '../api/projectApi';
 import { employeeApi, type Employee } from '../api/employeeApi';
+
 import { mockProjects } from '../data';
 
 const USE_REAL_API = true;
@@ -57,7 +58,29 @@ const simpleMapToProject = (response: ProjectResponse): Project => ({
     endDate: '',
 });
 
-// Mock data fallback
+
+const PINNED_PROJECTS_KEY = 'pinnedProjectIds';
+
+const getPinnedProjectIds = (): Set<string> => {
+    try {
+        const stored = localStorage.getItem(PINNED_PROJECTS_KEY);
+        if (stored) {
+            return new Set(JSON.parse(stored));
+        }
+    } catch (error) {
+        console.error('Error reading pinned projects from localStorage:', error);
+    }
+    return new Set();
+};
+
+const savePinnedProjectIds = (ids: Set<string>): void => {
+    try {
+        localStorage.setItem(PINNED_PROJECTS_KEY, JSON.stringify([...ids]));
+    } catch (error) {
+        console.error('Error saving pinned projects to localStorage:', error);
+    }
+};
+
 let projects = [...mockProjects];
 let nextId = projects.length + 1;
 
@@ -78,27 +101,10 @@ export const projectService = {
                     })
                 );
 
-                const userStr = localStorage.getItem('user');
-                const userId = userStr ? JSON.parse(userStr).id : null;
-
-                if (userId) {
-                    const pinChecks = await Promise.allSettled(
-                        projectsList.map(async (project) => {
-                            try {
-                                const pinResponse = await projectApi.isPinned(project.id, userId);
-                                return { id: project.id, isPinned: pinResponse.data };
-                            } catch {
-                                return { id: project.id, isPinned: false };
-                            }
-                        })
-                    );
-
-                    pinChecks.forEach((result, index) => {
-                        if (result.status === 'fulfilled') {
-                            projectsList[index].isPinned = result.value.isPinned;
-                        }
-                    });
-                }
+                const pinnedIds = getPinnedProjectIds();
+                projectsList.forEach(project => {
+                    project.isPinned = pinnedIds.has(project.id);
+                });
 
                 return projectsList;
             } catch (error) {
@@ -131,12 +137,20 @@ export const projectService = {
                 const user = userStr ? JSON.parse(userStr) : null;
                 const fallbackUserId = user?.id || 'system';
 
+
+                const companyId = 'temp-company-id';
+
+                if (!companyId) {
+                    throw new Error('No company found. Please create a company first.');
+                }
+
                 const response = await projectApi.create({
                     name: input.name,
                     description: input.description || '',
-                    companyId: '60d0fe4f5311236168a109ca',
+                    companyId: companyId,
                     leaderId: input.leaderId || fallbackUserId,
                     memberIds: input.memberIds || [],
+
                 });
                 return simpleMapToProject(response.data);
             } catch (error) {
@@ -199,34 +213,29 @@ export const projectService = {
     },
 
     async togglePin(id: string): Promise<Project | null> {
-        if (USE_REAL_API) {
-            try {
-                const userStr = localStorage.getItem('user');
-                const userId = userStr ? JSON.parse(userStr).id : '60d0fe4f5311236168a109ca';
-                const isPinnedResponse = await projectApi.isPinned(id, userId);
-                const currentlyPinned = isPinnedResponse.data;
+        const pinnedIds = getPinnedProjectIds();
+        const currentlyPinned = pinnedIds.has(id);
 
-                if (currentlyPinned) {
-                    await projectApi.unpin(id, userId);
-                } else {
-                    await projectApi.pin(id, userId);
-                }
+        if (currentlyPinned) {
+            pinnedIds.delete(id);
+        } else {
+            pinnedIds.add(id);
+        }
+        savePinnedProjectIds(pinnedIds);
 
-                const projectResponse = await projectApi.getById(id);
-                const project = simpleMapToProject(projectResponse.data);
-                project.isPinned = !currentlyPinned;
-                return project;
-            } catch (error) {
-                console.error('Pin API Error, falling back to mock:', error);
-            }
-        }
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        const project = projects.find(p => p.id === id);
-        if (project) {
-            project.isPinned = !project.isPinned;
-            return project;
-        }
-        return null;
+        // Return immediately without API call for instant response
+        return {
+            id,
+            isPinned: !currentlyPinned,
+            code: '',
+            name: '',
+            manager: '',
+            assignee: '',
+            group: '',
+            description: '',
+            startDate: '',
+            endDate: ''
+        } as Project;
     },
 
     async searchProjects(query: string): Promise<Project[]> {

@@ -105,8 +105,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         >
                             <div className="col-span-1 flex justify-center">
                                 <button
+                                    type="button"
                                     onClick={(e) => { e.stopPropagation(); onTogglePin(project.id); }}
-                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 active:scale-90 ${project.isPinned ? 'bg-[#F79E61] border-[#F79E61]' : 'border-gray-300 hover:border-[#F79E61]'}`}
+                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-90 relative z-10 ${project.isPinned ? 'bg-[#F79E61] border-[#F79E61]' : 'border-gray-300 hover:border-[#F79E61] bg-white'}`}
                                 >
                                     {project.isPinned && (
                                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { CreateJobInput, JobGroup, JobPriority, JobType } from '../../models';
 import type { Member } from '../../data/members.data';
-import AddJobModalView from '../../views/job/AddJobModalView';
+import { AddJobModalView } from '../../features/job';
 const calculateWorkingDays = (startDate: string, endDate: string): number => {
     if (!startDate || !endDate) return 0;
     const start = new Date(startDate);

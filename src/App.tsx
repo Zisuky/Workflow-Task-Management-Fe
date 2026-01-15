@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { MainLayout, AddProjectModal } from './components';
 import AddJobModal from './components/job/AddJobModal';
-import { DashboardPage, LoginPage, JobListPage, JobDetailPage, TimelinePage, HomePage } from './pages';
+import { DashboardPage, LoginPage, JobListPage, JobDetailPage, TimelinePage, HomePage, WorkflowPage, TemplatePage, SettingsPage } from './pages';
 import { projectService, authService, jobService } from './services';
 import type { User, CreateJobInput, CreateProjectInput } from './models';
 import { ToastProvider, useToast } from './ui/toast';
@@ -69,6 +69,9 @@ function AppWithToast() {
       toast.error('Tạo dự án thất bại');
     }
   }, [toast]);
+  const handleAddTemplate = () => {
+    toast.info('Tính năng tạo template đang được phát triển');
+  }
 
   if (isLoading) {
     return (
@@ -101,6 +104,7 @@ function AppWithToast() {
         handleAddProject={handleAddProject}
         setIsJobModalOpen={setIsJobModalOpen}
         setIsProjectModalOpen={setIsProjectModalOpen}
+        handleAddTemplate={handleAddTemplate}
       />
     </BrowserRouter>
   );
@@ -116,6 +120,7 @@ const AppContent: React.FC<{
   handleAddProject: (input: any) => void;
   setIsJobModalOpen: (open: boolean) => void;
   setIsProjectModalOpen: (open: boolean) => void;
+  handleAddTemplate: () => void;
 }> = ({
   isAuthenticated,
   currentUser,
@@ -126,7 +131,8 @@ const AppContent: React.FC<{
   handleAddJob,
   handleAddProject,
   setIsJobModalOpen,
-  setIsProjectModalOpen
+  setIsProjectModalOpen,
+  handleAddTemplate
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -158,6 +164,7 @@ const AppContent: React.FC<{
           onLogout={handleLogout}
           onAddJob={() => setIsJobModalOpen(true)}
           onAddProject={() => setIsProjectModalOpen(true)}
+          onAddTemplate={handleAddTemplate}
           onBack={handleBack}
           onTimeline={handleTimeline}
           onTimeFilterChange={handleTimeFilterChange}
@@ -170,6 +177,9 @@ const AppContent: React.FC<{
             <Route path="/job" element={<JobListPage key={refreshKey} />} />
             <Route path="/job/timeline" element={<TimelinePage key={refreshKey} />} />
             <Route path="/job/:id" element={<JobDetailPage />} />
+            <Route path="/workflow" element={<WorkflowPage key={refreshKey} />} />
+            <Route path="/template" element={<TemplatePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/login" element={<Navigate to="/home" replace />} />
             <Route path="*" element={<Navigate to="/home" replace />} />

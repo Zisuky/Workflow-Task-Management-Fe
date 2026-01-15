@@ -1,6 +1,12 @@
-export { default as DashboardPage } from './DashboardPage';
+// Re-export pages from features for backward compatibility
+// These will be gradually removed as imports are updated
+
+export { DashboardPage } from '../features/dashboard';
 export { default as LoginPage } from './LoginPage';
-export { default as JobListPage } from './JobListPage';
-export { default as JobDetailPage } from './JobDetailPage';
-export { default as TimelinePage } from './TimelinePage';
-export { default as HomePage } from './HomePage';
+export { JobListPage, JobDetailPage, TimelinePage } from '../features/job';
+export { HomePage } from '../features/home';
+export { WorkflowPage } from '../features/workflow';
+export { TemplatePage } from '../features/template';
+export { SettingsPage } from '../features/setting';
+
+

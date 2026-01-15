@@ -8,21 +8,27 @@ interface HeaderProps {
     showBackButton?: boolean;
     isChartPage?: boolean;
     isHomePage?: boolean;
+    isWorkflowPage?: boolean;
     onTimeFilterChange?: (filter: string) => void;
     currentTimeFilter?: string;
+    isTemplatePage?: boolean;
+    onAddTemplate?: () => void;
 }
-const Header: React.FC<HeaderProps> = ({ 
-    title = 'Trang chủ', 
-    onBack, 
-    onAddJob, 
-    onAddProject, 
-    onTimeline, 
-    isJobPage = false, 
+const Header: React.FC<HeaderProps> = ({
+    title = 'Trang chủ',
+    onBack,
+    onAddJob,
+    onAddProject,
+    onTimeline,
+    isJobPage = false,
     showBackButton = false,
     isChartPage = false,
     isHomePage = false,
+    isWorkflowPage = false,
     onTimeFilterChange,
-    currentTimeFilter = 'all'
+    currentTimeFilter = 'all',
+    isTemplatePage = false,
+    onAddTemplate
 }) => {
     const handleButtonClick = () => {
         if (isJobPage) {
@@ -48,9 +54,30 @@ const Header: React.FC<HeaderProps> = ({
                 ) : (
                     <h1 className="text-base font-medium text-gray-800">{title}</h1>
                 )}
+
+                {/* Flow Stats - Only on Workflow page */}
+                {isWorkflowPage && (
+                    <div className="flex items-center gap-4 ml-6 pl-6 border-l border-gray-200">
+                        <div className="flex items-center gap-1.5 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span className="text-gray-500">Flow Health:</span>
+                            <span className="font-semibold text-gray-900">86%</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+                            <span className="text-gray-500">Blocked:</span>
+                            <span className="font-semibold text-gray-900">2</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span className="text-gray-500">Avg Cycle Time:</span>
+                            <span className="font-semibold text-gray-900">3.4 days</span>
+                        </div>
+                    </div>
+                )}
             </div>
             {!showBackButton && (
-                <div className="flex items-center gap-3">
+                <div id="header-right-actions" className="flex items-center gap-3">
                     {(isChartPage || isHomePage) ? (
                         <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                             {[
@@ -62,11 +89,10 @@ const Header: React.FC<HeaderProps> = ({
                                 <button
                                     key={filter.key}
                                     onClick={() => onTimeFilterChange?.(filter.key)}
-                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                                        currentTimeFilter === filter.key
-                                            ? 'bg-white text-gray-900 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                    }`}
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${currentTimeFilter === filter.key
+                                        ? 'bg-white text-gray-900 shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                                        }`}
                                 >
                                     {filter.label}
                                 </button>
@@ -85,10 +111,19 @@ const Header: React.FC<HeaderProps> = ({
                                     <span>Timeline</span>
                                 </button>
                             )}
-                            {!isHomePage && (
+                            {!isHomePage && !isWorkflowPage && !isTemplatePage && (
                                 <button onClick={handleButtonClick} className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                     <span>{buttonText}</span>
+                                </button>
+                            )}
+                            {isTemplatePage && (
+                                <button
+                                    onClick={onAddTemplate}
+                                    className="flex items-center gap-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                    <span>Thêm Template</span>
                                 </button>
                             )}
                         </>

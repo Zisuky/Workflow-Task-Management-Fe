@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Member } from '../../data/members.data';
 import { employeeApi } from '../../api/employeeApi';
-import { MemberSelectView } from '../../views/dashboard/MemberSelectView';
+import { MemberSelectView } from '../../features/dashboard';
 interface MemberSelectProps {
     selectedMembers: Member[];
     onChange: (members: Member[]) => void;

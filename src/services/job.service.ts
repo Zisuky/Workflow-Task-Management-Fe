@@ -11,14 +11,23 @@ const USE_REAL_API = true;
 const employeeCache: Map<string, string> = new Map();
 const projectCache: Map<string, string> = new Map();
 
-async function getEmployeeName(employeeId: string): Promise<string> {
+async function getEmployeeName(employeeId: string | string[] | null | undefined): Promise<string> {
+    // Handle null/undefined
     if (!employeeId) return '';
 
+    // Handle array of IDs
+    if (Array.isArray(employeeId)) {
+        if (employeeId.length === 0) return '';
+        const names = await Promise.all(employeeId.map(id => getEmployeeName(id)));
+        return names.filter(n => n).join(', ');
+    }
+
+    // Handle string ID
     if (employeeCache.has(employeeId)) {
         return employeeCache.get(employeeId)!;
     }
 
-
+    // If it looks like a name (contains space), use it directly
     if (employeeId.includes(' ')) {
         employeeCache.set(employeeId, employeeId);
         return employeeId;
@@ -112,9 +121,41 @@ const beTofePriority: Record<string, Job['priority']> = {
 
 
 const mapToJob = async (task: TaskResponse): Promise<Job> => {
-    const [managerName, assigneeName, projectName, typeName, groupName] = await Promise.all([
-        getEmployeeName(task.assignerId),
-        getEmployeeName(task.assigneeId),
+    let managerName = '';
+    let assigneeName = '';
+
+    // Try to fetch task members for accurate names
+    try {
+        const membersResponse = await taskApi.getMembers(task.id);
+        const members = membersResponse.data || [];
+
+        // Find leader
+        const leader = members.find(m => m.role === 'LEADER');
+        if (leader) {
+            managerName = await getEmployeeName(leader.userId);
+        }
+
+        // Find all members (assignees)
+        const assignees = members.filter(m => m.role === 'MEMBER');
+        if (assignees.length > 0) {
+            const assigneeNames = await Promise.all(
+                assignees.map(m => getEmployeeName(m.userId))
+            );
+            assigneeName = assigneeNames.filter(n => n).join(', ');
+        } else if (leader) {
+            // Fallback to leader name if no members
+            assigneeName = managerName;
+        }
+    } catch (error) {
+        // Fallback to assignerId/assigneeId from task response
+        console.warn(`Failed to fetch members for task ${task.id}, falling back to IDs:`, error);
+        [managerName, assigneeName] = await Promise.all([
+            getEmployeeName(task.assignerId),
+            getEmployeeName(task.assigneeId),
+        ]);
+    }
+
+    const [projectName, typeName, groupName] = await Promise.all([
         getProjectName(task.projectId),
         getTypeName(task.typeId),
         getGroupName(task.taskGroupId),
@@ -128,8 +169,8 @@ const mapToJob = async (task: TaskResponse): Promise<Job> => {
         group: groupName as Job['group'],
         status: beToFeStatus[task.status] || 'To Do',
         priority: beTofePriority[task.priority] || 'Medium',
-        manager: managerName,
-        assignee: assigneeName,
+        manager: managerName || 'Chưa có',
+        assignee: assigneeName || 'Chưa có',
         startDate: task.startDate || task.createdAt,
         endDate: task.endDate || '',
         estimatedHours: 8,
@@ -319,9 +360,19 @@ export const jobService = {
                 }
                 assignerId = assignerId || 'system';
 
-                const assigneeId = input.assigneeId || 'system';
+                let assigneeIdArray: string[] = [];
+                if (input.assigneeId) {
+                    if (typeof input.assigneeId === 'string') {
+                        assigneeIdArray = input.assigneeId.split(',').map(id => id.trim()).filter(id => id);
+                    } else if (Array.isArray(input.assigneeId)) {
+                        assigneeIdArray = input.assigneeId;
+                    }
+                }
+                if (assigneeIdArray.length === 0) {
+                    assigneeIdArray = [assignerId];
+                }
 
-                const response = await taskApi.create({
+                const payload = {
                     name: input.name,
                     status: 'NOT_STARTED',
                     priority: priority === 'CRITICAL' || priority === 'HIGHEST' ? 'HIGH' : priority,
@@ -330,11 +381,13 @@ export const jobService = {
                     taskGroupId: taskGroupId,
                     typeId: typeId,
                     assignerId: assignerId,
-                    assigneeId: assigneeId,
+                    assigneeId: assigneeIdArray,
                     userUpdateId: assignerId,
                     startDate: input.startDate ? `${input.startDate}T00:00:00` : null,
                     endDate: input.endDate ? `${input.endDate}T23:59:59` : null,
-                });
+                };
+                console.log('Creating task with payload:', JSON.stringify(payload, null, 2));
+                const response = await taskApi.create(payload as any);
                 return mapToJob(response.data);
             } catch (error) {
                 console.error('Task API Error, falling back to mock:', error);

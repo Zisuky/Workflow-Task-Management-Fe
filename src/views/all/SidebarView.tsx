@@ -56,7 +56,7 @@ export const defaultMenuItems: MenuItem[] = [
     { id: 'projects', label: 'Quản lý dự án', icon: <ProjectIcon /> },
     { id: 'tasks', label: 'Quản lý công việc', icon: <TaskIcon /> },
     { id: 'flowwork', label: 'Flowwork', icon: <FlowworkIcon /> },
-    { id: 'reports', label: 'Báo cáo', icon: <ReportIcon /> },
+    { id: 'reports', label: 'Template', icon: <ReportIcon /> },
     { id: 'settings', label: 'Cài đặt', icon: <SettingsIcon /> },
 ];
 const SidebarView: React.FC<SidebarViewProps> = ({

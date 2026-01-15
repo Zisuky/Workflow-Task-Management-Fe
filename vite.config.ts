@@ -96,6 +96,27 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace('/api/pmcc/v1/history', '/api/history'),
         },
 
+        '/api/pmcc/v1/companies': {
+          target: localBeUrl,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace('/api/pmcc/v1/companies', '/api/companies'),
+        },
+
+        '/api/pmcc/v1/project-details': {
+          target: localBeUrl,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace('/api/pmcc/v1/project-details', '/api/project-details'),
+        },
+
+        '/api/pmcc/v1/task-details': {
+          target: localBeUrl,
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace('/api/pmcc/v1/task-details', '/api/task-details'),
+        },
+
         '/api': {
           target: externalApiUrl,
           changeOrigin: true,

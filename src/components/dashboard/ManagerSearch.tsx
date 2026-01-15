@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Member } from '../../data/members.data';
 import { employeeApi } from '../../api/employeeApi';
-import { ManagerSearchView } from '../../views/dashboard/ManagerSearchView';
+import { ManagerSearchView } from '../../features/dashboard';
 
 interface ManagerSearchProps {
     value: string;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { mockMembers, mockRoles } from './data/members.data';
-import type { Member, Role } from './data/members.data';
+import { mockMembers, mockRoles } from '../../data/members.data';
+import type { Member, Role } from '../../data/members.data';
 
 type RoleFilter = 'all' | 'Admin' | 'Member' | 'Viewer';
 

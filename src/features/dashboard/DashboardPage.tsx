@@ -1,23 +1,25 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { projectService } from '../../services';
-import type { Project } from '../../models';
+import { projectRepository as projectService } from '../project/infrastructure/project.api';
+import type { Project } from '../../shared/types/project';
 import DashboardView from './DashboardView';
 import ProjectDetailModal from '../../components/dashboard/ProjectDetailModal';
+import { useProjectStore } from '../project/application/project.store';
 
 const ITEMS_PER_PAGE = 10;
-interface DashboardPageProps {
-    onAddProject?: () => void;
-}
-const DashboardPage: React.FC<DashboardPageProps> = () => {
+
+const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const [projects, setProjects] = useState<Project[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const searchTerm = useProjectStore(state => state.searchTerm);
+    const selectedProject = useProjectStore(state => state.selectedProject);
+    const isDetailModalOpen = useProjectStore(state => state.isDetailModalOpen);
+    const setSearchTerm = useProjectStore(state => state.setSearchTerm);
+    const selectProject = useProjectStore(state => state.selectProject);
+    const setDetailModalOpen = useProjectStore(state => state.setDetailModalOpen);
 
     const loadProjects = useCallback(async () => {
         setIsLoading(true);
@@ -25,9 +27,11 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
         setProjects(data);
         setIsLoading(false);
     }, []);
+
     useEffect(() => {
         loadProjects();
     }, [loadProjects]);
+
     const filteredProjects = projects
         .filter(project =>
             project.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -38,8 +42,10 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
             if (!a.isPinned && b.isPinned) return 1;
             return 0;
         });
+
     const displayedProjects = filteredProjects.slice(0, displayCount);
     const hasMore = displayCount < filteredProjects.length;
+
     const handleLoadMore = useCallback(() => {
         if (isLoadingMore || !hasMore) return;
         setIsLoadingMore(true);
@@ -48,33 +54,32 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
             setIsLoadingMore(false);
         }, 300);
     }, [isLoadingMore, hasMore, filteredProjects.length]);
+
     useEffect(() => {
         setDisplayCount(ITEMS_PER_PAGE);
     }, [searchTerm]);
 
-    // Optimistic update - update UI immediately, then sync to localStorage
     const handleTogglePin = (id: string) => {
-        // Immediately update local state (optimistic)
         setProjects(prevProjects =>
-            prevProjects.map(p =>
-                p.id === id ? { ...p, isPinned: !p.isPinned } : p
-            )
+            prevProjects.map(p => (p.id === id ? { ...p, isPinned: !p.isPinned } : p))
         );
-
-        // Sync to localStorage in background
         projectService.togglePin(id);
     };
+
     const handleProjectClick = (project: Project) => {
         navigate('/job', { state: { projectId: project.id } });
     };
+
     const handleViewDetail = (project: Project) => {
-        setSelectedProject(project);
-        setIsDetailModalOpen(true);
+        selectProject(project);
+        setDetailModalOpen(true);
     };
+
     const handleCloseDetailModal = () => {
-        setIsDetailModalOpen(false);
-        setSelectedProject(null);
+        setDetailModalOpen(false);
+        selectProject(null);
     };
+
     return (
         <>
             <DashboardView
@@ -97,6 +102,5 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
         </>
     );
 };
+
 export default DashboardPage;
-
-

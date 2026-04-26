@@ -1,4 +1,4 @@
-import type { StatCard } from '../../models';
+import type { StatCard } from '../../shared/types/dashboard';
 const colorClasses = {
     blue: 'from-blue-50 to-indigo-100',
     green: 'from-green-50 to-emerald-100',

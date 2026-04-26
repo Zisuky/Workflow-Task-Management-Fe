@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import SidebarContainer from '../../components/all/Sidebar';
+import Header from '../../components/all/Header';
 interface MainLayoutViewProps {
     children: ReactNode;
     isSidebarCollapsed: boolean;
@@ -18,6 +20,7 @@ interface MainLayoutViewProps {
     currentTimeFilter?: string;
     isTemplatePage?: boolean;
     onAddTemplate?: () => void;
+    isTemplateWizardActive?: boolean;
 }
 const MainLayoutView: React.FC<MainLayoutViewProps> = ({
     children,
@@ -38,6 +41,7 @@ const MainLayoutView: React.FC<MainLayoutViewProps> = ({
     currentTimeFilter,
     isTemplatePage = false,
     onAddTemplate,
+    isTemplateWizardActive = false,
 }) => {
     return (
         <div className="flex min-h-screen bg-slate-50 max-w-full overflow-x-hidden">
@@ -58,12 +62,11 @@ const MainLayoutView: React.FC<MainLayoutViewProps> = ({
                     currentTimeFilter={currentTimeFilter}
                     isTemplatePage={isTemplatePage}
                     onAddTemplate={onAddTemplate}
+                    isTemplateWizardActive={isTemplateWizardActive}
                 />
                 <main className={`flex-1 ${isWorkflowPage ? 'overflow-hidden' : 'overflow-y-auto'} ${isChartPage || isHomePage || isWorkflowPage ? '' : 'p-6'}`}>{children}</main>
             </div>
         </div>
     );
 };
-import { Sidebar as SidebarContainer } from '../../components/all';
-import Header from '../../components/all/Header';
 export default MainLayoutView;

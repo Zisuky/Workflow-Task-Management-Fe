@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { Project } from '../../models';
+import type { Project } from '../../shared/types/project';
 interface DashboardViewProps {
     isLoading: boolean;
     searchTerm: string;

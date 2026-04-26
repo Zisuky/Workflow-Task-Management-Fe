@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Member } from '../../data/members.data';
-import { employeeApi } from '../../api/employeeApi';
+import { userApi } from '../../features/user/infrastructure/user.api';
 import { MemberSelectView } from '../../features/dashboard';
 interface MemberSelectProps {
     selectedMembers: Member[];
@@ -23,25 +23,16 @@ const MemberSelect: React.FC<MemberSelectProps> = ({
         const fetchMembers = async () => {
             try {
                 // Use employeeApi to search or get all
-                const employees = searchTerm
-                    ? await employeeApi.search(searchTerm)
-                    : await employeeApi.getAll();
-
-                // Map Employee to Member interface if slightly different, 
-                // assuming Member interface matches or is compatible.
-                // Based on previous code, Member likely has id, name, role/department.
-                // Employee has id, name, position_id, avatar_id.
-                // We might need to map it correctly. 
-                // Let's assume for now we map directly or simple mapping.
-                // Actually Member interface from data/members.data usually has role.
-                // Employee has position_id. Let's map position_id or a default role.
-
-                const mappedMembers: Member[] = employees.map(emp => ({
+                const users = searchTerm
+                    ? await userApi.search(searchTerm)
+                    : await userApi.getAll();
+                const mappedMembers: Member[] = users.map(emp => ({
                     id: emp.id,
                     name: emp.name,
-                    role: emp.position_id || 'Member', // Fallback role
-                    avatar: emp.avatar_id || undefined,
-                    email: '' // Add if required by Member interface
+                    role: 'Member' as const,
+                    avatar: emp.avatarUrl || undefined,
+                    status: 'Đã đăng ký' as const,
+                    createdAt: new Date().toLocaleDateString('vi-VN'),
                 }));
 
                 setSearchResults(mappedMembers);
@@ -107,3 +98,4 @@ const MemberSelect: React.FC<MemberSelectProps> = ({
     );
 };
 export default MemberSelect;
+

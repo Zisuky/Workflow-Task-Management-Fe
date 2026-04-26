@@ -1,5 +1,9 @@
 import React from 'react';
-import { KPICard, ProductivityLineChart, TaskPriorityList, TaskStatusDonut, DepartmentBarChart } from '../../components';
+import KPICard from '../../components/home/KPICard';
+import ProductivityLineChart from '../../components/home/ProductivityLineChart';
+import TaskPriorityList from '../../components/home/TaskPriorityList';
+import TaskStatusDonut from '../../components/home/TaskStatusDonut';
+import DepartmentBarChart from '../../components/home/DepartmentBarChart';
 
 interface HomeData {
   kpis: {

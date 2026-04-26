@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { jobService } from '../../services';
-import type { Job } from '../../models';
+import { taskRepository as jobService } from '../task/infrastructure/task.repository';
+import type { Job } from '../../shared/types/task';
 import JobDetailView, { type JobUpdateData } from './JobDetailView';
 import { useToast } from '../../ui/toast';
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { LoginCredentials, User } from '../models';
-import { authService } from '../services';
-import { LoginView } from '../views';
+import type { LoginCredentials, User } from '../shared/types';
+import { userApi as authService } from '../features/user/infrastructure/user.api';
+import { LoginView } from '../features/user/presentation/LoginView';
 interface LoginPageProps {
     onLoginSuccess?: (user: User) => void;
 }
@@ -17,8 +17,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
         try {
             const user = await authService.login(credentials);
             onLoginSuccess?.(user);
-        } catch (err: any) {
-            setError(err.message || 'Đăng nhập thất bại');
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Đăng nhập thất bại';
+            setError(message || 'Đăng nhập thất bại');
         } finally {
             setIsLoading(false);
         }

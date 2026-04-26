@@ -1,4 +1,4 @@
-import type { Project } from '../models';
+import type { Project } from '../shared/types/project';
 export const mockProjects: Project[] = [
     { id: '1', code: 'PRJ-001', name: 'Website Công Ty', manager: 'Nguyễn Văn A', assignee: 'Trần Thị B', isPinned: true },
     { id: '2', code: 'PRJ-002', name: 'App Mobile Bán Hàng', manager: 'Lê Văn C', assignee: 'Phạm Văn D', isPinned: true },

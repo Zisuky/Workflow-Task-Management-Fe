@@ -1,35 +1,28 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { jobService } from '../../services/job.service';
-import type { Job } from '../../models';
+import { taskRepository as jobService } from '../task/infrastructure/task.repository';
+import type { Job } from '../../shared/types/task';
+import { useTaskStore } from '../task/application/task.store';
 import JobListView from './JobListView';
+
 const JobListPage: React.FC = () => {
-    const [jobs, setJobs] = useState<Job[]>([]);
-    const [allJobs, setAllJobs] = useState<Job[]>([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const jobs = useTaskStore(state => state.jobs);
+    const allJobs = useTaskStore(state => state.allJobs);
+    const searchTerm = useTaskStore(state => state.searchTerm);
+    const currentPage = useTaskStore(state => state.currentPage);
+    const itemsPerPage = useTaskStore(state => state.itemsPerPage);
+    const isLoading = useTaskStore(state => state.isLoading);
+    const setJobs = useTaskStore(state => state.setJobs);
+    const setAllJobs = useTaskStore(state => state.setAllJobs);
+    const setSearchTerm = useTaskStore(state => state.setSearchTerm);
+    const setCurrentPage = useTaskStore(state => state.setCurrentPage);
+    const setItemsPerPage = useTaskStore(state => state.setItemsPerPage);
+    const setLoading = useTaskStore(state => state.setLoading);
+
     const navigate = useNavigate();
     const location = useLocation();
-
     const projectId = location.state?.projectId as string | undefined;
 
-    const loadJobs = useCallback(async () => {
-        setIsLoading(true);
-        let data: Job[];
-        if (projectId) {
-            data = await jobService.getJobsByProject(projectId);
-        } else {
-            data = await jobService.getJobs();
-        }
-        setAllJobs(data);
-        setIsLoading(false);
-    }, [projectId]);
-
-    useEffect(() => {
-        loadJobs();
-    }, [loadJobs]);
     const [filters, setFilters] = useState({
         priority: '',
         group: '',
@@ -46,15 +39,24 @@ const JobListPage: React.FC = () => {
         assignees: [] as string[]
     });
 
+    const loadJobs = useCallback(async () => {
+        setLoading(true);
+        const data: Job[] = projectId ? await jobService.getJobsByProject(projectId) : await jobService.getJobs();
+        setAllJobs(data);
+        setLoading(false);
+    }, [projectId, setAllJobs, setLoading]);
 
+    useEffect(() => {
+        loadJobs();
+    }, [loadJobs]);
 
     useEffect(() => {
         if (allJobs.length > 0) {
             const priorities = [...new Set(allJobs.map(j => j.priority).filter(Boolean))].sort();
             const groups = [...new Set(allJobs.map(j => j.group).filter(Boolean))].sort();
             const statuses = [...new Set(allJobs.map(j => j.status).filter(Boolean))].sort();
-            const managers = [...new Set(allJobs.flatMap(j => j.manager?.split(',').map(s => s.trim()) || []).filter(Boolean))].sort();
-            const assignees = [...new Set(allJobs.flatMap(j => j.assignee?.split(',').map(s => s.trim()) || []).filter(Boolean))].sort();
+            const managers = [...new Set(allJobs.flatMap(j => j.manager?.split(',').map((s: string) => s.trim()) || []).filter(Boolean))].sort();
+            const assignees = [...new Set(allJobs.flatMap(j => j.assignee?.split(',').map((s: string) => s.trim()) || []).filter(Boolean))].sort();
 
             setFilterOptions({ priorities, groups, statuses, managers, assignees });
         }
@@ -71,26 +73,16 @@ const JobListPage: React.FC = () => {
             );
         }
 
-        if (filters.priority) {
-            filtered = filtered.filter(job => job.priority === filters.priority);
-        }
-        if (filters.group) {
-            filtered = filtered.filter(job => job.group === filters.group);
-        }
-        if (filters.status) {
-            filtered = filtered.filter(job => job.status === filters.status);
-        }
-        if (filters.manager) {
-            filtered = filtered.filter(job => job.manager?.split(',').map(s => s.trim()).includes(filters.manager));
-        }
-        if (filters.assignee) {
-            filtered = filtered.filter(job => job.assignee?.split(',').map(s => s.trim()).includes(filters.assignee));
-        }
+        if (filters.priority) filtered = filtered.filter(job => job.priority === filters.priority);
+        if (filters.group) filtered = filtered.filter(job => job.group === filters.group);
+        if (filters.status) filtered = filtered.filter(job => job.status === filters.status);
+        if (filters.manager) filtered = filtered.filter(job => job.manager?.split(',').map((s: string) => s.trim()).includes(filters.manager));
+        if (filters.assignee) filtered = filtered.filter(job => job.assignee?.split(',').map((s: string) => s.trim()).includes(filters.assignee));
 
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
         setJobs(filtered.slice(startIndex, endIndex));
-    }, [allJobs, searchTerm, currentPage, itemsPerPage, filters]);
+    }, [allJobs, searchTerm, currentPage, itemsPerPage, filters, setJobs]);
 
     const handleFilterChange = (key: string, value: string) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -107,7 +99,7 @@ const JobListPage: React.FC = () => {
         setCurrentPage(1);
     };
 
-    const getFilteredCount = () => {
+    const filteredCount = (() => {
         let filtered = allJobs;
         if (searchTerm) {
             filtered = filtered.filter(job =>
@@ -121,14 +113,13 @@ const JobListPage: React.FC = () => {
         if (filters.status) filtered = filtered.filter(job => job.status === filters.status);
         if (filters.manager) filtered = filtered.filter(job => job.manager === filters.manager);
         if (filters.assignee) filtered = filtered.filter(job => job.assignee === filters.assignee);
-
         return filtered.length;
-    };
+    })();
 
-    const filteredCount = getFilteredCount();
     const handleJobClick = (jobId: string) => {
         navigate(`/job/${jobId}`);
     };
+
     return (
         <JobListView
             jobs={jobs}
@@ -147,4 +138,5 @@ const JobListPage: React.FC = () => {
         />
     );
 };
+
 export default JobListPage;

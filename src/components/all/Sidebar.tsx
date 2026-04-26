@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import SidebarView, { defaultMenuItems } from '../../views/all/SidebarView';
-import { useCurrentUser } from '../../api';
+import SidebarView from '../../views/all/SidebarView';
+import { useCurrentUser } from '../../features/user/infrastructure/user.api';
 
 interface SidebarProps {
     isCollapsed?: boolean;
@@ -55,7 +55,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, onLogo
         <SidebarView
             isCollapsed={isCollapsed}
             activeItem={getActiveItem()}
-            menuItems={defaultMenuItems}
             onToggle={onToggle || (() => { })}
             onMenuClick={handleMenuClick}
             onLogout={onLogout || (() => { })}

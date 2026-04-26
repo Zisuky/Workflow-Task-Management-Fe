@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Member } from '../../data/members.data';
-import { employeeApi } from '../../api/employeeApi';
+import { userApi } from '../../features/user/infrastructure/user.api';
 import { ManagerSearchView } from '../../features/dashboard';
 
 interface ManagerSearchProps {
@@ -28,16 +28,18 @@ const ManagerSearch: React.FC<ManagerSearchProps> = ({
         const fetchEmployees = async () => {
             try {
                 // Use employeeApi to search or get all
-                const employees = searchTerm
-                    ? await employeeApi.search(searchTerm)
-                    : await employeeApi.getAll();
+                const users = searchTerm
+                    ? await userApi.search(searchTerm)
+                    : await userApi.getAll();
 
                 // Map Employee to Member interface
-                const mappedMembers: Member[] = employees.map(emp => ({
+                const mappedMembers: Member[] = users.map(emp => ({
                     id: emp.id,
                     name: emp.name,
-                    role: emp.position_id || 'Member', // Fallback role
-                    avatar: emp.avatar_id || undefined,
+                    role: 'Member' as const,
+                    avatar: emp.avatarUrl || undefined,
+                    status: 'Đã đăng ký' as const,
+                    createdAt: new Date().toLocaleDateString('vi-VN'),
                 }));
 
                 setSearchResults(mappedMembers);

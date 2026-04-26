@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import HomeView from './HomeView';
-import { dashboardService } from '../../services';
+import { dashboardRepository as dashboardService } from '../dashboard/infrastructure/dashboard.repository';
 
 interface HomeData {
   kpis: {

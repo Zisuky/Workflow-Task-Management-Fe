@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ChartDashboardView from './ChartDashboardView';
-import { dashboardService } from '../../services';
+import { dashboardRepository as dashboardService } from '../dashboard/infrastructure/dashboard.repository';
 
 interface ChartData {
     taskStatus: Array<{ status: string; count: number; color: string }>;
@@ -88,4 +88,3 @@ const ChartPage: React.FC = () => {
 };
 
 export default ChartPage;
-

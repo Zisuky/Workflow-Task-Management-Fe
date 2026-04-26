@@ -26,6 +26,7 @@ const LoginView: React.FC<LoginViewProps> = ({
                         className="w-48 h-48 mx-auto mb-4 transition-transform duration-300 hover:scale-105"
                     />
                     <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Quản Lý Công Việc</h1>
+                    <p className="text-gray-500 mt-2">Đăng nhập để tiếp tục</p>
                 </div>
                 <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl shadow-gray-200/50 p-8 animate-slideUp border border-white/50">
                     <form onSubmit={onSubmit} className="space-y-5">

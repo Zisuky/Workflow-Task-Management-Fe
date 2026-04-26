@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Job, JobStatus, JobPriority } from '../../models';
+import type { Job } from '../../shared/types/task';
+import type { JobStatus, JobPriority } from '../../shared/types';
 import { EditableSelect } from '../../components/ui/EditableSelect';
 interface ColumnConfig {
     key: string;

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { jobService } from '../../services/job.service';
-import type { Job } from '../../models';
+import { taskRepository as jobService } from '../task/infrastructure/task.repository';
+import type { Job } from '../../shared/types/task';
 interface TimelineTask {
     id: string;
     memberName: string;

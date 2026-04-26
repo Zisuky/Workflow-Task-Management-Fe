@@ -1,4 +1,4 @@
-import type { Project } from '../../models';
+import type { Project } from '../../shared/types/project';
 
 interface ProjectDetailModalProps {
     isOpen: boolean;

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { ProjectResponse } from '../../../api/projectApi';
+import type { ProjectResponse } from '../../task/infrastructure/project.client';
 
 interface ProjectSearchDropdownProps {
     projects: ProjectResponse[];

@@ -21,26 +21,25 @@ export interface ProjectFormData {
     memberIds: string[];
     startDate: string;
     endDate: string;
-    workflowTemplateId?: string;
 }
 
 const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
     const [manager, setManager] = useState('');
     const [managerId, setManagerId] = useState('');
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const today = new Date().toISOString().split('T')[0];
     const [startDate, setStartDate] = useState(today);
     const [endDate, setEndDate] = useState(today);
-    const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
             setManager('');
             setManagerId('');
             setSelectedMembers([]);
+            setSelectedTemplateId(null);
             setStartDate(today);
             setEndDate(today);
-            setSelectedTemplateId(null);
         }
     }, [isOpen, today]);
 
@@ -64,7 +63,6 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
             memberIds: selectedMembers.map(m => m.id),
             startDate: formData.get('startDate') as string || '',
             endDate: formData.get('endDate') as string || '',
-            workflowTemplateId: selectedTemplateId || undefined,
         });
         setSelectedMembers([]);
         setManagerId('');
@@ -99,13 +97,13 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
             endDate={endDate}
             today={today}
             selectedMembers={selectedMembers}
-            selectedTemplateId={selectedTemplateId}
             onClose={handleClose}
             onSubmit={handleSubmit}
             onManagerChange={handleManagerChange}
             onMembersChange={setSelectedMembers}
             onStartDateChange={handleStartDateChange}
             onEndDateChange={setEndDate}
+            selectedTemplateId={selectedTemplateId}
             onTemplateChange={setSelectedTemplateId}
         />
     );

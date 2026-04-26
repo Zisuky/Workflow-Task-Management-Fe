@@ -1,5 +1,5 @@
-import { getUserInitials } from '../../api';
-import type { Employee } from '../../api/employeeApi';
+import { getUserInitials } from '../../features/user/infrastructure/user.api';
+import type { User } from '../../shared/types';
 
 interface MenuItem {
     id: string;
@@ -10,11 +10,11 @@ interface MenuItem {
 interface SidebarViewProps {
     isCollapsed: boolean;
     activeItem: string;
-    menuItems: MenuItem[];
+    menuItems?: MenuItem[];
     onToggle: () => void;
     onMenuClick: (id: string) => void;
     onLogout: () => void;
-    currentUser?: Employee | null;
+    currentUser?: User | null;
     isLoadingUser?: boolean;
 }
 function HomeIcon() {
@@ -39,6 +39,9 @@ function SettingsIcon() {
 function LogoutIcon() {
     return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
 }
+function SignatureIcon() {
+    return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>;
+}
 function ChevronIcon({ isCollapsed }: { isCollapsed: boolean }) {
     return (
         <svg
@@ -51,7 +54,7 @@ function ChevronIcon({ isCollapsed }: { isCollapsed: boolean }) {
         </svg>
     );
 }
-export const defaultMenuItems: MenuItem[] = [
+const defaultMenuItems: MenuItem[] = [
     { id: 'home', label: 'Trang chủ', icon: <HomeIcon /> },
     { id: 'projects', label: 'Quản lý dự án', icon: <ProjectIcon /> },
     { id: 'tasks', label: 'Quản lý công việc', icon: <TaskIcon /> },
@@ -62,7 +65,7 @@ export const defaultMenuItems: MenuItem[] = [
 const SidebarView: React.FC<SidebarViewProps> = ({
     isCollapsed,
     activeItem,
-    menuItems,
+    menuItems = defaultMenuItems,
     onToggle,
     onMenuClick,
     onLogout,
@@ -71,7 +74,7 @@ const SidebarView: React.FC<SidebarViewProps> = ({
 }) => {
     const userInitials = getUserInitials(currentUser?.name);
     const userName = currentUser?.name || (isLoadingUser ? 'Đang tải...' : 'User');
-    const userPosition = currentUser?.position_id || (isLoadingUser ? '' : 'N/A');
+    const userPosition = currentUser?.roles?.join(', ') || (isLoadingUser ? '' : 'N/A');
     return (
         <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ${isCollapsed ? 'w-[70px]' : 'w-[250px]'}`}>
             <button

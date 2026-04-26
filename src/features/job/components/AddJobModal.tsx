@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { CreateJobInput, JobGroup, JobPriority, JobType } from '../../../models';
+import type { CreateJobInput } from '../../../shared/types/task';
+import type { JobGroup, JobPriority, JobType } from '../../../shared/types';
 import type { Member } from '../../../data/members.data';
 import AddJobModalView from '../AddJobModalView';
 const calculateWorkingDays = (startDate: string, endDate: string): number => {

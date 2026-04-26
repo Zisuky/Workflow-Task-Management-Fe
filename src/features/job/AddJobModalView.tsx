@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import ManagerSearch from '../../components/dashboard/ManagerSearch';
 import MemberSelectView from '../../components/dashboard/MemberSelect';
-import ProjectSearchDropdown from '../../components/job/ProjectSearchDropdown';
+import ProjectSearchDropdown from './components/ProjectSearchDropdown';
 import DateInput from '../../components/common/DateInput';
 import type { Member } from '../../data/members.data';
-import { projectApi, type ProjectResponse } from '../../api/projectApi';
+import { projectApi, type ProjectResponse } from '../task/infrastructure/project.client';
 
 interface AddJobModalViewProps {
     isOpen: boolean;

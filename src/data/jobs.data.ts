@@ -1,4 +1,4 @@
-import type { Job } from '../models';
+import type { Job } from '../shared/types/task';
 export const mockJobs: Job[] = [
     {
         id: '1',

@@ -1,11 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { MainLayout, AddProjectModal } from './components';
-import AddJobModal from './components/job/AddJobModal';
-import { DashboardPage, LoginPage, JobListPage, JobDetailPage, TimelinePage, HomePage, WorkflowPage, TemplatePage, SettingsPage } from './pages';
-import { projectService, authService, jobService } from './services';
-import type { User, CreateJobInput, CreateProjectInput } from './models';
+import MainLayout from './components/all/MainLayout';
+import AddProjectModal from './components/dashboard/AddProjectModal';
+import AddJobModal from './features/job/components/AddJobModal';
+import { DashboardPage, JobListPage, JobDetailPage, TimelinePage, HomePage, WorkflowPage, TemplatePage, SettingsPage } from './features';
+import LoginPage from './pages/LoginPage';
+import { projectRepository as projectService } from './features/project/infrastructure/project.api';
+import { userApi as authService } from './features/user/infrastructure/user.api';
+import { taskRepository as jobService } from './features/task/infrastructure/task.repository';
+import type { User } from './shared/types';
+import type { CreateJobInput } from './shared/types/task';
+import type { CreateProjectInput } from './shared/types/project';
 import { ToastProvider, useToast } from './ui/toast';
+import { useUserStore } from './features/user/application/user.store';
 
 function App() {
   return (
@@ -23,6 +30,8 @@ function AppWithToast() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
+  const setSession = useUserStore(state => state.setSession);
+  const clearSession = useUserStore(state => state.clearSession);
 
 
   useEffect(() => {
@@ -32,20 +41,23 @@ function AppWithToast() {
 
       setIsAuthenticated(isAuth);
       setCurrentUser(user);
+      setSession(user);
       setIsLoading(false);
     };
 
     checkAuth();
-  }, []);
+  }, [setSession]);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setIsAuthenticated(true);
+    setSession(user);
   };
   const handleLogout = () => {
     authService.logout();
     setCurrentUser(null);
     setIsAuthenticated(false);
+    clearSession();
   };
   const handleAddJob = useCallback(async (input: CreateJobInput) => {
     try {
@@ -69,9 +81,6 @@ function AppWithToast() {
       toast.error('Tạo dự án thất bại');
     }
   }, [toast]);
-  const handleAddTemplate = () => {
-    toast.info('Tính năng tạo template đang được phát triển');
-  }
 
   if (isLoading) {
     return (
@@ -104,23 +113,21 @@ function AppWithToast() {
         handleAddProject={handleAddProject}
         setIsJobModalOpen={setIsJobModalOpen}
         setIsProjectModalOpen={setIsProjectModalOpen}
-        handleAddTemplate={handleAddTemplate}
       />
     </BrowserRouter>
   );
 };
 const AppContent: React.FC<{
   isAuthenticated: boolean;
-  currentUser: any;
+    currentUser: User | null;
   isJobModalOpen: boolean;
   isProjectModalOpen: boolean;
   refreshKey: number;
   handleLogout: () => void;
-  handleAddJob: (input: any) => void;
-  handleAddProject: (input: any) => void;
+  handleAddJob: (input: CreateJobInput) => void;
+  handleAddProject: (input: CreateProjectInput) => void;
   setIsJobModalOpen: (open: boolean) => void;
   setIsProjectModalOpen: (open: boolean) => void;
-  handleAddTemplate: () => void;
 }> = ({
   isAuthenticated,
   currentUser,
@@ -132,7 +139,6 @@ const AppContent: React.FC<{
   handleAddProject,
   setIsJobModalOpen,
   setIsProjectModalOpen,
-  handleAddTemplate
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -141,10 +147,18 @@ const AppContent: React.FC<{
     const currentProjectId = location.state?.projectId as string | undefined;
 
     const handleBack = () => {
-      navigate('/job');
+      if (location.pathname.includes('/template') && location.search.includes('action=add')) {
+        navigate('/template');
+      } else {
+        navigate('/job');
+      }
     };
     const handleTimeline = () => {
       navigate('/job/timeline');
+    };
+
+    const handleAddTemplateClick = () => {
+      navigate('/template?action=add');
     };
 
     const handleTimeFilterChange = (filter: string) => {
@@ -164,7 +178,7 @@ const AppContent: React.FC<{
           onLogout={handleLogout}
           onAddJob={() => setIsJobModalOpen(true)}
           onAddProject={() => setIsProjectModalOpen(true)}
-          onAddTemplate={handleAddTemplate}
+          onAddTemplate={handleAddTemplateClick}
           onBack={handleBack}
           onTimeline={handleTimeline}
           onTimeFilterChange={handleTimeFilterChange}

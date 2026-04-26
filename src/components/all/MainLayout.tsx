@@ -63,6 +63,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     const isWorkflowPage = location.pathname.includes('/workflow');
     const isTemplatePage = location.pathname.includes('/template');
     const isHomePage = location.pathname === '/home' || location.pathname === '/';
+    const isTemplateWizardActive = isTemplatePage && location.search.includes('action=add');
     return (
         <MainLayoutView
             isSidebarCollapsed={isSidebarCollapsed}
@@ -82,6 +83,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             title={getPageTitle(location.pathname)}
             onTimeFilterChange={onTimeFilterChange}
             currentTimeFilter={currentTimeFilter}
+            isTemplateWizardActive={isTemplateWizardActive}
         >
             {children}
         </MainLayoutView>

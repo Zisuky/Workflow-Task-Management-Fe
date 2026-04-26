@@ -13,6 +13,7 @@ interface HeaderProps {
     currentTimeFilter?: string;
     isTemplatePage?: boolean;
     onAddTemplate?: () => void;
+    isTemplateWizardActive?: boolean;
 }
 const Header: React.FC<HeaderProps> = ({
     title = 'Trang chủ',
@@ -28,7 +29,8 @@ const Header: React.FC<HeaderProps> = ({
     onTimeFilterChange,
     currentTimeFilter = 'all',
     isTemplatePage = false,
-    onAddTemplate
+    onAddTemplate,
+    isTemplateWizardActive = false
 }) => {
     const handleButtonClick = () => {
         if (isJobPage) {
@@ -41,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({
     return (
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
             <div className="flex items-center gap-3">
-                {showBackButton ? (
+                {(showBackButton || isTemplateWizardActive) ? (
                     <button
                         onClick={onBack}
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
@@ -117,7 +119,7 @@ const Header: React.FC<HeaderProps> = ({
                                     <span>{buttonText}</span>
                                 </button>
                             )}
-                            {isTemplatePage && (
+                            {isTemplatePage && !isTemplateWizardActive && (
                                 <button
                                     onClick={onAddTemplate}
                                     className="flex items-center gap-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"

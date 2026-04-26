@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import type { Job } from '../../models';
-import { commentApi, type Comment } from '../../api/commentApi';
-import { historyApi, type HistoryItem } from '../../api/historyApi';
-import { taskTypeApi, type TaskType } from '../../api/taskTypeApi';
-import { taskGroupApi, type TaskGroup } from '../../api/taskGroupApi';
+import type { Job } from '../../shared/types/task';
+import { commentApi, type Comment } from '../task/infrastructure/comment.client';
+import { historyApi, type HistoryItem } from '../task/infrastructure/history.client';
+import { taskTypeApi, type TaskType } from '../task/infrastructure/taskType.client';
+import { taskGroupApi, type TaskGroup } from '../task/infrastructure/taskGroup.client';
 
 export interface JobUpdateData {
   priority: Job['priority'];

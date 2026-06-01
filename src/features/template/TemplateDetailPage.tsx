@@ -15,7 +15,6 @@ const TemplateDetailPage: React.FC = () => {
   const [selectedStages, setSelectedStages] = useState<SelectedStage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [mappings, setMappings] = useState<any[]>([]);
 
   // We keep a copy of original to detect changes
   const [originalStages, setOriginalStages] = useState<SelectedStage[]>([]);
@@ -40,8 +39,6 @@ const TemplateDetailPage: React.FC = () => {
       const mappingsRes = await workflowApi.getStatusMappings(workflowId) as unknown;
       const rawMappings = mappingsRes as { data?: any[] } | any[];
       const mappingsList = Array.isArray(rawMappings) ? rawMappings : (rawMappings.data || []);
-      
-      setMappings(mappingsList);
 
       const stages: SelectedStage[] = detailsList.map(d => {
         const mapping = mappingsList.find(m => m.taskStatusId === d.id || m.statusId === d.id);
@@ -50,7 +47,8 @@ const TemplateDetailPage: React.FC = () => {
           key: d.id,
           statusId: d.id,
           name: d.name,
-          sortOrder
+          sortOrder,
+          isNew: false
         };
       }).sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -71,7 +69,7 @@ const TemplateDetailPage: React.FC = () => {
     if (isStatusSelected(statusId)) {
       setSelectedStages(prev => prev.filter(s => s.statusId !== statusId));
     } else {
-      setSelectedStages(prev => [...prev, { key: statusId, statusId, name }]);
+      setSelectedStages(prev => [...prev, { key: statusId, statusId, name, isNew: true }]);
     }
   };
 

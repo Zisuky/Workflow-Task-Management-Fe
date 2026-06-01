@@ -20,4 +20,5 @@ export interface SelectedStage {
   statusId: string | null;
   name: string;
   isNew: boolean;
+  sortOrder?: number;
 }

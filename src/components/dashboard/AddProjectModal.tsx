@@ -28,6 +28,8 @@ interface AddProjectModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: ProjectFormData) => void;
+    defaultManager?: string;
+    defaultManagerId?: string;
 }
 
 const previewProjectCode = (name: string): string => {
@@ -36,14 +38,20 @@ const previewProjectCode = (name: string): string => {
     return `${initials}-XXXXXX`;
 };
 
-const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSubmit }) => {
+const AddProjectModal: React.FC<AddProjectModalProps> = ({ 
+    isOpen, 
+    onClose, 
+    onSubmit,
+    defaultManager = '',
+    defaultManagerId = ''
+}) => {
     const today = new Date().toISOString().split('T')[0];
 
     // Form state — all in one place
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [manager, setManager] = useState('');
-    const [managerId, setManagerId] = useState('');
+    const [manager, setManager] = useState(defaultManager);
+    const [managerId, setManagerId] = useState(defaultManagerId);
     const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
     const [startDate, setStartDate] = useState(today);
     const [endDate, setEndDate] = useState(today);
@@ -59,8 +67,8 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
         const t = new Date().toISOString().split('T')[0];
         setName('');
         setDescription('');
-        setManager('');
-        setManagerId('');
+        setManager(defaultManager);
+        setManagerId(defaultManagerId);
         setSelectedMembers([]);
         setStartDate(t);
         setEndDate(t);

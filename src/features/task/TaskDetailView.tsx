@@ -223,19 +223,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onUpdate, 
     loadLists();
   }, [task.projectId]);
 
-  // Resolve a userId to a display name, caching in state
-  const resolveUserName = useCallback(async (userId: string): Promise<string> => {
-    if (!userId) return 'Ẩn danh';
-    if (userNames.has(userId)) return userNames.get(userId)!;
-    try {
-      const user = await userApi.getById(userId);
-      const name = user?.name || userId;
-      setUserNames(prev => new Map(prev).set(userId, name));
-      return name;
-    } catch {
-      return userId;
-    }
-  }, [userNames]);
+
 
   // Batch-resolve all userIds from comments + history
   const resolveAllUserIds = useCallback(async (commentsList: Comment[], historyList: HistoryItem[]) => {

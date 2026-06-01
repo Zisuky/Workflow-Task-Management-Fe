@@ -36,7 +36,7 @@ const AlertListCard: React.FC<AlertListCardProps> = ({ alerts }) => {
     
     const jobId = jobIdMap[taskCode];
     if (jobId) {
-      navigate(`/job/${jobId}`);
+      navigate(`/task/${jobId}`);
     }
   };
 

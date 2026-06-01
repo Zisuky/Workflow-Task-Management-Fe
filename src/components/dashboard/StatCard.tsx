@@ -28,7 +28,7 @@ const StatCardComponent: React.FC<StatCardProps> = ({ stat }) => {
                     {stat.trend && (
                         <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full transition-all duration-300
                              ${stat.trend.isPositive
-                                ? 'text-green-600 bg-green-50 group-hover:bg-green-100'
+                                ? 'text-green-600 bg-green-50 group-hover:bg-gray-100'
                                 : 'text-red-600 bg-red-50 group-hover:bg-red-100'}`}>
                             {stat.trend.isPositive ? '↑' : '↓'} {stat.trend.value}%
                         </span>

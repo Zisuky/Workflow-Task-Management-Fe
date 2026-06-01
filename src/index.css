@@ -169,31 +169,31 @@ button:focus {
   animation: fadeIn 0.2s ease-out;
 }
 
-/* Job Detail View Styles */
-.job-detail-page {
+/* Task Detail View Styles */
+.task-detail-page {
   padding: 24px;
   background: #f8fafc;
   min-height: calc(100vh - 90px);
 }
 
-.job-detail-content {
+.task-detail-content {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 10 auto;
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 24px;
   align-items: start;
 }
 
-.job-detail-form-panel {
+.task-detail-form-panel {
   width: 100%;
 }
 
-.job-detail-info-panel {
+.task-detail-info-panel {
   width: 100%;
 }
 
-.job-detail-card {
+.task-detail-card {
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -201,7 +201,7 @@ button:focus {
   overflow: hidden;
 }
 
-.job-detail-tabs-card {
+.task-detail-tabs-card {
   margin-top: 16px;
 }
 
@@ -215,7 +215,7 @@ button:focus {
   gap: 16px;
 }
 
-.job-title-text {
+.task-title-text {
   font-size: 24px;
   font-weight: 700;
   color: #0f172a;
@@ -249,62 +249,6 @@ button:focus {
   background: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-/* Animated Delete Button */
-.delete-button {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: #ef4444;
-  border: none;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0px 0px 15px rgba(239, 68, 68, 0.3);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  position: relative;
-  padding: 0;
-}
-
-.delete-button span {
-  position: absolute;
-  top: -20px;
-  color: white;
-  font-size: 0px;
-  transition: all 0.3s ease;
-  opacity: 0;
-}
-
-.delete-button svg {
-  width: 16px;
-  height: 16px;
-  transition: all 0.3s ease;
-}
-
-.delete-button svg path {
-  fill: white;
-  stroke: none;
-}
-
-.delete-button:hover {
-  width: 100px;
-  border-radius: 22px;
-  background-color: #dc2626;
-  box-shadow: 0px 0px 20px rgba(220, 38, 38, 0.4);
-}
-
-.delete-button:hover span {
-  font-size: 14px;
-  opacity: 1;
-  transform: translateY(32px);
-}
-
-.delete-button:hover svg {
-  transform: translateY(50px);
 }
 
 /* Form Fields */
@@ -452,7 +396,9 @@ button:focus {
   font-size: 15px;
   font-weight: 500;
   color: #0f172a;
+
   line-height: 1.4;
+  margin: 0px 15px 0px;
 }
 
 .info-value-bold {
@@ -475,6 +421,7 @@ button:focus {
   justify-content: center;
   font-size: 14px;
   border: 2px solid;
+  margin-left: 15px;
 }
 
 .avatar-blue {
@@ -489,11 +436,6 @@ button:focus {
   border-color: #bbf7d0;
 }
 
-.person-name-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: #0f172a;
-}
 
 /* Tabs */
 .detail-tabs {
@@ -648,13 +590,13 @@ button:focus {
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* ===== NEW JOB DETAIL PAGE STYLES (Figma Design) ===== */
-.job-detail-page {
+/* ===== NEW TASK DETAIL PAGE STYLES (Figma Design) ===== */
+.task-detail-page {
   min-height: 100%;
   background: var(--bg-secondary);
 }
 
-.job-detail-page-header {
+.task-detail-page-header {
   padding: 16px 24px;
   background: transparent;
 }
@@ -682,7 +624,7 @@ button:focus {
   height: 20px;
 }
 
-.job-detail-content {
+.task-detail-content {
   display: grid;
   grid-template-columns: 1fr 380px;
   gap: 24px;
@@ -691,14 +633,14 @@ button:focus {
   margin: 0 auto;
 }
 
-.job-detail-form-panel,
-.job-detail-info-panel {
+.task-detail-form-panel,
+.task-detail-info-panel {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.job-detail-card {
+.task-detail-card {
   background: var(--bg-primary);
   border-radius: 12px;
   border: 1px solid var(--border-light);
@@ -716,7 +658,7 @@ button:focus {
   border-bottom: 1px solid var(--border-light);
 }
 
-.job-title-text {
+.task-title-text {
   font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
@@ -737,7 +679,6 @@ button:focus {
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #F9A66C 0%, #F79E61 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -748,9 +689,22 @@ button:focus {
   white-space: nowrap;
 }
 
-.update-button:hover,
-.delete-button:hover {
+.update-button {
+  background: linear-gradient(135deg, #F9A66C 0%, #F79E61 100%);
+}
+
+.update-button:hover {
   background: linear-gradient(135deg, #F79E61 0%, #e88d50 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.delete-button {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+}
+
+.delete-button:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -983,6 +937,7 @@ button:focus {
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
+  margin: 5px 15px 0px;
 }
 
 .info-label svg {
@@ -1001,11 +956,7 @@ button:focus {
 }
 
 /* Person Row */
-.person-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+
 
 .avatar-small {
   width: 32px;
@@ -1034,6 +985,7 @@ button:focus {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
+
 }
 
 /* Detail Tabs */
@@ -2608,4 +2560,21 @@ button:focus {
 *:focus {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* ── Task Detail Slide-over Panel ─────────────────────────────────────────── */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

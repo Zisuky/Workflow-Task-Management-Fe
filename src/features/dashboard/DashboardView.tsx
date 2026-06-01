@@ -100,7 +100,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                         <div
                             key={project.id}
                             onClick={() => onProjectClick?.(project)}
-                            className="grid grid-cols-12 gap-4 px-6 py-4 text-sm hover:bg-orange-50/50 transition-colors duration-200 cursor-pointer group animate-slideUp"
+                            className="grid grid-cols-12 gap-4 px-6 py-4 text-sm hover:bg-gray-100 transition-colors duration-200 cursor-pointer group animate-slideUp even:bg-[#FFF9F5] odd:bg-white"
                             style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
                         >
                             <div className="col-span-1 flex justify-center">

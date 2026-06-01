@@ -397,7 +397,7 @@ const JobListView: React.FC<JobListViewProps> = ({
                                 <tr
                                     key={job.id || `job-${index}`}
                                     onClick={() => onJobClick?.(job.id)}
-                                    className="hover:bg-orange-50/50 transition-colors cursor-pointer"
+                                    className="hover:bg-gray-100 transition-colors cursor-pointer even:bg-[#FFF9F5] odd:bg-white"
                                 >
                                     {visibleColumns.map((column, colIndex) => (
                                         <td key={`${job.id || index}-${column.key || colIndex}`} className="px-4 py-3 text-sm">

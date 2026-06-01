@@ -6,11 +6,11 @@ interface MainLayoutViewProps {
     isSidebarCollapsed: boolean;
     onSidebarToggle: () => void;
     onLogout: () => void;
-    onAddJob: () => void;
+    onAddTask: () => void;
     onAddProject: () => void;
     onBack?: () => void;
     onTimeline?: () => void;
-    isJobPage: boolean;
+    isTaskPage: boolean;
     isChartPage?: boolean;
     isHomePage?: boolean;
     isWorkflowPage?: boolean;
@@ -21,17 +21,19 @@ interface MainLayoutViewProps {
     isTemplatePage?: boolean;
     onAddTemplate?: () => void;
     isTemplateWizardActive?: boolean;
+    canAddTask?: boolean;
+    canAddProject?: boolean;
 }
 const MainLayoutView: React.FC<MainLayoutViewProps> = ({
     children,
     isSidebarCollapsed,
     onSidebarToggle,
     onLogout,
-    onAddJob,
+    onAddTask,
     onAddProject,
     onBack,
     onTimeline,
-    isJobPage,
+    isTaskPage,
     isChartPage = false,
     isHomePage = false,
     isWorkflowPage = false,
@@ -42,6 +44,8 @@ const MainLayoutView: React.FC<MainLayoutViewProps> = ({
     isTemplatePage = false,
     onAddTemplate,
     isTemplateWizardActive = false,
+    canAddTask = true,
+    canAddProject = true,
 }) => {
     return (
         <div className="flex min-h-screen bg-slate-50 max-w-full overflow-x-hidden">
@@ -50,10 +54,10 @@ const MainLayoutView: React.FC<MainLayoutViewProps> = ({
                 <Header
                     title={title}
                     onBack={onBack}
-                    onAddJob={onAddJob}
+                    onAddTask={onAddTask}
                     onAddProject={onAddProject}
                     onTimeline={onTimeline}
-                    isJobPage={isJobPage}
+                    isTaskPage={isTaskPage}
                     isChartPage={isChartPage}
                     isHomePage={isHomePage}
                     isWorkflowPage={isWorkflowPage}
@@ -63,6 +67,8 @@ const MainLayoutView: React.FC<MainLayoutViewProps> = ({
                     isTemplatePage={isTemplatePage}
                     onAddTemplate={onAddTemplate}
                     isTemplateWizardActive={isTemplateWizardActive}
+                    canAddTask={canAddTask}
+                    canAddProject={canAddProject}
                 />
                 <main className={`flex-1 ${isWorkflowPage ? 'overflow-hidden' : 'overflow-y-auto'} ${isChartPage || isHomePage || isWorkflowPage ? '' : 'p-6'}`}>{children}</main>
             </div>

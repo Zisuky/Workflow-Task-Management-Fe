@@ -1,15 +1,15 @@
 import { create } from 'zustand';
-import type { Job } from '../../../shared/types/task';
+import type { Task } from '../../../shared/types/task';
 
-interface TaskState {
-  jobs: Job[];
-  allJobs: Job[];
+export interface TaskState {
+  tasks: Task[];
+  allTasks: Task[];
   searchTerm: string;
   currentPage: number;
   itemsPerPage: number;
   isLoading: boolean;
-  setJobs: (jobs: Job[]) => void;
-  setAllJobs: (jobs: Job[]) => void;
+  setTasks: (tasks: Task[]) => void;
+  setAllTasks: (tasks: Task[]) => void;
   setSearchTerm: (searchTerm: string) => void;
   setCurrentPage: (page: number) => void;
   setItemsPerPage: (count: number) => void;
@@ -17,14 +17,14 @@ interface TaskState {
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
-  jobs: [],
-  allJobs: [],
+  tasks: [],
+  allTasks: [],
   searchTerm: '',
   currentPage: 1,
   itemsPerPage: 10,
   isLoading: true,
-  setJobs: (jobs) => set({ jobs }),
-  setAllJobs: (allJobs) => set({ allJobs }),
+  setTasks: (tasks) => set({ tasks }),
+  setAllTasks: (allTasks) => set({ allTasks }),
   setSearchTerm: (searchTerm) => set({ searchTerm, currentPage: 1 }),
   setCurrentPage: (currentPage) => set({ currentPage }),
   setItemsPerPage: (itemsPerPage) => set({ itemsPerPage, currentPage: 1 }),

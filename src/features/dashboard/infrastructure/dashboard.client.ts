@@ -23,7 +23,7 @@ export interface WarningDTO {
   daysOverdue: number;
   daysRemaining: number;
 }
-export interface TaskCountByTypeDTO { typeId: string; typeName: string; count: number; }
+export interface TaskCountByGroupDTO { taskGroupId: string; groupName: string; count: number; }
 
 export const dashboardApi = {
   getStats() { return api.get('/dashboard/stats'); },
@@ -31,5 +31,5 @@ export const dashboardApi = {
   getPriority() { return api.get('/dashboard/priority'); },
   getTaskStatus() { return api.get('/dashboard/task-status'); },
   getWarnings() { return api.get('/dashboard/warnings'); },
-  getTaskCountByType() { return api.get('/dashboard/task-count-by-type'); },
+  getTaskCountByGroup() { return api.get('/dashboard/task-count-by-group'); },
 };

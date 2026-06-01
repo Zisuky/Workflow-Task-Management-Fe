@@ -16,6 +16,7 @@ interface SidebarViewProps {
     onLogout: () => void;
     currentUser?: User | null;
     isLoadingUser?: boolean;
+    visibleMenuIds?: string[];
 }
 function HomeIcon() {
     return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
@@ -38,9 +39,6 @@ function SettingsIcon() {
 }
 function LogoutIcon() {
     return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>;
-}
-function SignatureIcon() {
-    return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>;
 }
 function ChevronIcon({ isCollapsed }: { isCollapsed: boolean }) {
     return (
@@ -71,10 +69,16 @@ const SidebarView: React.FC<SidebarViewProps> = ({
     onLogout,
     currentUser,
     isLoadingUser = false,
+    visibleMenuIds,
 }) => {
     const userInitials = getUserInitials(currentUser?.name);
     const userName = currentUser?.name || (isLoadingUser ? 'Đang tải...' : 'User');
     const userPosition = currentUser?.roles?.join(', ') || (isLoadingUser ? '' : 'N/A');
+
+    // Filter menu items: if visibleMenuIds provided, only show those items
+    const filteredMenuItems = visibleMenuIds
+        ? menuItems.filter(item => visibleMenuIds.includes(item.id))
+        : menuItems;
     return (
         <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ${isCollapsed ? 'w-[70px]' : 'w-[250px]'}`}>
             <button
@@ -105,7 +109,7 @@ const SidebarView: React.FC<SidebarViewProps> = ({
             </div>
             <nav className="flex-1 py-4 overflow-y-auto">
                 <ul className="flex flex-col gap-1 px-3">
-                    {menuItems.map((item) => (
+                    {filteredMenuItems.map((item) => (
                         <li key={item.id}>
                             <button onClick={() => onMenuClick(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all text-left ${activeItem === item.id ? 'bg-orange-50 text-orange-500 border-l-[3px] border-orange-500 -ml-[3px] pl-[15px]' : 'text-gray-600 hover:bg-gray-50'}`}>
                                 <span className="flex-shrink-0">{item.icon}</span>

@@ -47,15 +47,7 @@ const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                             <span className="text-gray-800 font-medium">{project.assignee || 'Chưa có'}</span>
                         </div>
 
-                        {/* Group */}
-                        {project.group && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-500 mb-2">Nhóm</label>
-                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-700">
-                                    {project.group}
-                                </span>
-                            </div>
-                        )}
+                        {/* Group — removed: field no longer exists on Project */}
 
                         {/* Pin Status */}
                         <div>

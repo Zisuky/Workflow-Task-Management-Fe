@@ -1,107 +1,124 @@
-import React from 'react';
-import type { FlowStep, Task } from '../../../data/workflow.data';
-import { getTasksByStep } from '../../../data/workflow.data';
+import React, { useState } from 'react';
+import type { WorkflowStep } from '../domain/workflow.entity';
+import type { Task } from '../../../shared/types/task';
 import FlowCard from './FlowCard';
 
 interface FlowColumnProps {
-    step: FlowStep;
-    tasks: Task[];
-    onDragStart: (e: React.DragEvent, taskId: string) => void;
-    onDragOver: (e: React.DragEvent) => void;
-    onDrop: (e: React.DragEvent, stepId: string) => void;
-    isDropDisabled?: boolean;
+  step: WorkflowStep;
+  tasks: Task[];
+  onDragStart: (e: React.DragEvent, taskId: string) => void;
+  onDrop: (e: React.DragEvent, stepId: string) => void;
+  onPin?: (taskId: string) => void;
+  onDelete?: (taskId: string) => void;
+  onEdit?: (taskId: string) => void;
+  onCardClick?: (taskId: string) => void;
+  highlightIncomplete?: boolean;
 }
 
-type WipStatus = 'normal' | 'at-limit' | 'exceeded';
-
 const FlowColumn: React.FC<FlowColumnProps> = ({
-    step,
-    tasks,
-    onDragStart,
-    onDragOver,
-    onDrop,
-    isDropDisabled = false,
+  step,
+  tasks,
+  onDragStart,
+  onDrop,
+  onPin,
+  onDelete,
+  onEdit,
+  onCardClick,
+  highlightIncomplete = false,
 }) => {
-    const stepTasks = getTasksByStep(tasks, step.id);
-    const taskCount = stepTasks.length;
+  const [isDragOver, setIsDragOver] = useState(false);
 
-    // Determine WIP status
-    const getWipStatus = (): WipStatus => {
-        if (step.wipMax && taskCount >= step.wipMax) {
-            return taskCount > step.wipMax ? 'exceeded' : 'at-limit';
-        }
-        return 'normal';
-    };
+  const stepTasks = tasks.filter(t => t.statusId === step.statusId);
+  const count = stepTasks.length;
 
-    const wipStatus = getWipStatus();
-    const isAtLimit = wipStatus === 'at-limit' || wipStatus === 'exceeded';
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  };
 
-    // Handle drop with WIP check
-    const handleDrop = (e: React.DragEvent) => {
-        if (isDropDisabled || wipStatus === 'exceeded') {
-            e.preventDefault();
-            return;
-        }
-        onDrop(e, step.id);
-    };
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false);
+  };
 
-    // Handle drag over with WIP check
-    const handleDragOver = (e: React.DragEvent) => {
-        if (isDropDisabled || wipStatus === 'exceeded') {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'none';
-            return;
-        }
-        onDragOver(e);
-    };
+  const handleDrop = (e: React.DragEvent) => {
+    setIsDragOver(false);
+    onDrop(e, step.id);
+  };
 
-    return (
-        <div
-            className={`flow-column ${wipStatus === 'exceeded' ? 'flow-column-exceeded' : ''}`}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-        >
-            {/* Column Header - Simplified */}
-            <div className="flow-column-header-simple" style={{ backgroundColor: step.color }}>
-                <div className="flow-column-header-left">
-                    <h3 className="flow-column-title-simple">{step.name}</h3>
-                    <span className={`flow-column-wip-badge ${wipStatus}`}>
-                        {taskCount} / {step.wipMax ?? '∞'}
-                    </span>
-                </div>
-                <button className="flow-column-menu-btn">⋮</button>
-            </div>
-
-            {/* WIP Warning Message */}
-            {isAtLimit && (
-                <div className="flow-wip-warning">
-                    <span className="flow-wip-warning-icon">⚠️</span>
-                    <div>
-                        <span className="flow-wip-warning-text">Đạt giới hạn công việc (WIP)!</span>
-                        <br />
-                        <span className="flow-wip-warning-desc">Không thể kéo thêm task vào cột này</span>
-                    </div>
-                </div>
-            )}
-
-            {/* Tasks */}
-            <div className="flow-column-tasks">
-                {stepTasks.map((task) => (
-                    <FlowCard
-                        key={task.id}
-                        task={task}
-                        onDragStart={onDragStart}
-                    />
-                ))}
-
-                {stepTasks.length === 0 && (
-                    <div className="flow-column-empty">
-                        Kéo thả task vào đây
-                    </div>
-                )}
-            </div>
+  return (
+    <div
+      className={`flow-column flex flex-col rounded-xl overflow-hidden border transition-all ${
+        isDragOver
+          ? 'border-orange-400 shadow-md'
+          : highlightIncomplete && count > 0
+          ? 'border-orange-300 ring-2 ring-orange-300 ring-offset-1'
+          : 'border-gray-100'
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* ── Column Header ─────────────────────────────────────────────────── */}
+      <div
+        className="px-4 py-3 flex items-center justify-between flex-shrink-0"
+        style={{ backgroundColor: step.color }}
+      >
+        <div className="flex items-center gap-2">
+          {/* Stage name in CAPS */}
+          <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+            {step.name}
+          </span>
+          {/* Count badge */}
+          <span className="text-xs font-semibold text-gray-500 bg-white/60 px-1.5 py-0.5 rounded-full">
+            {count}
+          </span>
+          {/* FINAL badge */}
+          {step.isFinal && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700 border border-green-200">
+              FINAL
+            </span>
+          )}
         </div>
-    );
+        {/* ⋮ menu placeholder */}
+        <button className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-white/50 transition-colors text-base">
+          ⋮
+        </button>
+      </div>
+
+      {/* ── Cards area ────────────────────────────────────────────────────── */}
+      <div
+        className={`flex-1 p-3 overflow-y-auto min-h-[120px] ${
+          isDragOver ? 'bg-orange-50/40' : 'bg-white'
+        }`}
+      >
+        {stepTasks.map(task => (
+          <FlowCard
+            key={task.id}
+            task={task}
+            onDragStart={onDragStart}
+            onPin={onPin}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onCardClick={onCardClick}
+            isFinal={step.isFinal}
+          />
+        ))}
+
+        {stepTasks.length === 0 && (
+          <div
+            className={`flex items-center justify-center h-20 rounded-lg border-2 border-dashed text-xs transition-colors ${
+              isDragOver
+                ? 'border-orange-400 text-orange-500 font-semibold bg-orange-50'
+                : 'border-gray-200 text-gray-400'
+            }`}
+          >
+            {isDragOver ? '⬇ Thả vào đây' : 'Kéo thả task vào đây'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default FlowColumn;

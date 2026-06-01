@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { User } from '../domain/user.entity';
 
-interface UserState {
+export interface UserState {
   currentUser: User | null;
   isAuthenticated: boolean;
   setSession: (user: User | null) => void;

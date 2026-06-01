@@ -1,6 +1,14 @@
+import { useState, useEffect } from 'react';
 import type { Member } from '../../data/members.data';
 import DateInput from '../../components/common/DateInput';
-import { mockWorkflowTemplates } from '../../data/workflow-templates.data';
+import { workflowApi } from '../workflow/infrastructure/workflow.client';
+
+interface WorkflowOption {
+    id: string;
+    name: string;
+    description: string | null;
+    isDefault: boolean;
+}
 
 interface AddProjectModalViewProps {
     isOpen: boolean;
@@ -37,6 +45,47 @@ const AddProjectModalView: React.FC<AddProjectModalViewProps> = ({
     onEndDateChange,
     onTemplateChange,
 }) => {
+    const [workflows, setWorkflows] = useState<WorkflowOption[]>([]);
+    const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(false);
+    const [projectName, setProjectName] = useState('');
+
+    // Preview project code — mirrors BE logic: initials of each word + 6 random digits
+    const previewProjectCode = (name: string): string => {
+        if (!name.trim()) return '—';
+        const initials = name.trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').join('');
+        return `${initials}-XXXXXX`;
+    };
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const fetchWorkflows = async () => {
+            setIsLoadingWorkflows(true);
+            try {
+                const response = await workflowApi.getAll();
+                const list = Array.isArray(response) ? response : (response.data ?? []);
+                const mapped: WorkflowOption[] = list.map((w: { id: string; name: string; description?: string | null; isDefault?: boolean }) => ({
+                    id: w.id,
+                    name: w.name,
+                    description: w.description || null,
+                    isDefault: w.isDefault ?? false,
+                }));
+                setWorkflows(mapped);
+                if (!selectedTemplateId) {
+                    const defaultWf = mapped.find(w => w.isDefault);
+                    if (defaultWf) {
+                        onTemplateChange(defaultWf.id);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load workflows:', err);
+                setWorkflows([]);
+            } finally {
+                setIsLoadingWorkflows(false);
+            }
+        };
+        fetchWorkflows();
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleTemplateClick = (templateId: string) => {
@@ -64,17 +113,21 @@ const AddProjectModalView: React.FC<AddProjectModalViewProps> = ({
                                     <input
                                         type="text"
                                         name="name"
+                                        value={projectName}
+                                        onChange={e => setProjectName(e.target.value)}
                                         className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-gray-600 mb-2">Mã Dự Án <span className="text-red-500">*</span></label>
+                                    <label className="block text-sm text-gray-600 mb-2">Mã Dự Án</label>
                                     <input
                                         type="text"
-                                        name="code"
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
+                                        value={previewProjectCode(projectName)}
+                                        disabled
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed font-mono text-sm"
                                     />
+                                    <p className="text-xs text-gray-400 mt-1">Tự động tạo từ tên dự án</p>
                                 </div>
                             </div>
                             <div>
@@ -127,47 +180,58 @@ const AddProjectModalView: React.FC<AddProjectModalViewProps> = ({
                     {/* Right Column - Workflow Templates */}
                     <div className="w-[360px] flex flex-col">
                         <div className="px-6 py-6 border-b border-gray-100 sticky top-0 bg-white z-10">
-                            <h2 className="text-xl font-bold text-gray-800">Áp dụng quy trình mẫu</h2>
+                            <h2 className="text-xl font-bold text-gray-800">Áp dụng quy trình</h2>
                         </div>
                         <div className="px-6 py-4 flex-1 overflow-y-auto">
-                            <p className="text-sm text-gray-500 mb-4">Các quy trình mẫu:</p>
-                            <div className="space-y-3">
-                                {mockWorkflowTemplates.map((template) => (
-                                    <div
-                                        key={template.id}
-                                        onClick={() => handleTemplateClick(template.id)}
-                                        className={`p-4 border rounded-xl cursor-pointer transition-all hover:shadow-md ${selectedTemplateId === template.id
-                                            ? 'border-[#F79E61] bg-[#FFF8F3] ring-2 ring-[#F79E61]/20'
-                                            : 'border-gray-200 bg-white hover:border-gray-300'
-                                            }`}
-                                    >
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1e3a5f] to-[#2d5a87] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                                                {template.code}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-semibold text-gray-800 text-sm">{template.name}</h4>
-                                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{template.description}</p>
-                                                <div className="flex gap-2 mt-2">
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
-                                                        {template.stagesCount} giai đoạn
-                                                    </span>
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
-                                                        {template.tasksCount} công việc mẫu
-                                                    </span>
+                            <p className="text-sm text-gray-500 mb-4">Chọn quy trình làm việc cho dự án:</p>
+                            {isLoadingWorkflows ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="w-8 h-8 border-3 border-orange-200 rounded-full animate-spin border-t-[#F79E61]"></div>
+                                </div>
+                            ) : workflows.length === 0 ? (
+                                <div className="text-center py-8 text-gray-400 text-sm">
+                                    Chưa có quy trình nào. Vui lòng tạo workflow trước.
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {workflows.map((wf) => (
+                                        <div
+                                            key={wf.id}
+                                            onClick={() => handleTemplateClick(wf.id)}
+                                            className={`p-4 border rounded-xl cursor-pointer transition-all hover:shadow-md ${selectedTemplateId === wf.id
+                                                ? 'border-[#F79E61] bg-[#FFF8F3] ring-2 ring-[#F79E61]/20'
+                                                : 'border-gray-200 bg-white hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#1e3a5f] to-[#2d5a87] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                                    {wf.name.substring(0, 2).toUpperCase()}
                                                 </div>
-                                            </div>
-                                            {selectedTemplateId === template.id && (
-                                                <div className="flex-shrink-0">
-                                                    <svg className="w-5 h-5 text-[#F79E61]" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                    </svg>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-semibold text-gray-800 text-sm">{wf.name}</h4>
+                                                    {wf.description && (
+                                                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{wf.description}</p>
+                                                    )}
+                                                    <div className="flex gap-2 mt-2">
+                                                        {wf.isDefault && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700 font-medium">
+                                                                Mặc định
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
+                                                {selectedTemplateId === wf.id && (
+                                                    <div className="flex-shrink-0">
+                                                        <svg className="w-5 h-5 text-[#F79E61]" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

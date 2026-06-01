@@ -22,8 +22,8 @@ const RegisterView: React.FC<RegisterViewProps> = ({
             <div className="w-full max-w-lg animate-fadeIn">
                 <div className="text-center mb-6 animate-slideDown">
                     <img
-                        src="/DOffice/Logo_DOffice_5_Symbol.png"
-                        alt="DOffice Logo"
+                        src="/logo.png"
+                        alt="Confluent Logo"
                         className="w-32 h-32 mx-auto mb-2 transition-transform duration-300 hover:scale-105"
                     />
                     <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Tạo tài khoản mới</h1>

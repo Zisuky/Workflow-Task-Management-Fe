@@ -24,8 +24,8 @@ const LoginView: React.FC<LoginViewProps> = ({
             <div className="w-full max-w-md animate-fadeIn">
                 <div className="text-center mb-8 animate-slideDown">
                     <img
-                        src="/DOffice/Logo_DOffice_5_Symbol.png"
-                        alt="DOffice Logo"
+                        src="/logo.png"
+                        alt="Confluent Logo"
                         className="w-48 h-48 mx-auto mb-4 transition-transform duration-300 hover:scale-105"
                     />
                     <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Quản Lý Công Việc</h1>

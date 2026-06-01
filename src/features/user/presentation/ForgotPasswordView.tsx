@@ -32,8 +32,8 @@ const ForgotPasswordView: React.FC<ForgotPasswordViewProps> = ({
             <div className="w-full max-w-md animate-fadeIn">
                 <div className="text-center mb-8 animate-slideDown">
                     <img
-                        src="/DOffice/Logo_DOffice_5_Symbol.png"
-                        alt="DOffice Logo"
+                        src="/logo.png"
+                        alt="Confluent Logo"
                         className="w-40 h-40 mx-auto mb-4 transition-transform duration-300 hover:scale-105"
                     />
                     <h1 className="text-2xl font-bold text-gray-800 tracking-tight">

@@ -1,9 +1,12 @@
+import type { LoginCredentials } from '../../shared/types';
+import { Link } from 'react-router-dom';
+
 interface LoginViewProps {
-    credentials: { email: string; password: string; rememberMe?: boolean };
+    credentials: LoginCredentials;
     showPassword: boolean;
     isLoading: boolean;
     error: string | null;
-    onCredentialsChange: (credentials: { email: string; password: string; rememberMe?: boolean }) => void;
+    onCredentialsChange: (credentials: LoginCredentials) => void;
     onTogglePassword: () => void;
     onSubmit: (e: React.FormEvent) => void;
 }
@@ -13,7 +16,7 @@ const LoginView: React.FC<LoginViewProps> = ({
     isLoading,
     error,
     onCredentialsChange,
-    onTogglePassword,
+    // onTogglePassword,
     onSubmit,
 }) => {
     return (
@@ -57,9 +60,6 @@ const LoginView: React.FC<LoginViewProps> = ({
                                     placeholder="*********"
                                     required
                                 />
-                                <button type="button" onClick={onTogglePassword} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
-                                    {showPassword ? '👁' : '👁‍🗨'}
-                                </button>
                             </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -67,7 +67,7 @@ const LoginView: React.FC<LoginViewProps> = ({
                                 <input type="checkbox" checked={credentials.rememberMe} onChange={(e) => onCredentialsChange({ ...credentials, rememberMe: e.target.checked })} className="w-4 h-4 text-[#F79E61] rounded border-gray-300 focus:ring-[#F79E61] transition-colors" />
                                 <span className="text-sm text-gray-600 group-hover:text-gray-800 transition-colors">Ghi nhớ đăng nhập</span>
                             </label>
-                            <a href="#" className="text-sm text-[#F79E61] hover:text-[#e88d50] hover:underline transition-colors font-medium"></a>
+                            <Link to="/forgot-password" id="forgot-password-link" className="text-sm text-[#F79E61] hover:text-[#e88d50] hover:underline transition-colors font-medium">Quên mật khẩu?</Link>
                         </div>
                         <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-[#F79E61] to-[#f0884a] hover:from-[#e88d50] hover:to-[#e07d3a] text-white font-semibold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-orange-200/50 hover:shadow-xl hover:shadow-orange-300/50 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2">
                             {isLoading ? (
@@ -80,11 +80,12 @@ const LoginView: React.FC<LoginViewProps> = ({
                             )}
                         </button>
                     </form>
-                    <p className="mt-8 text-center text-sm text-gray-500">{' '}
-                        <a href="#" className="text-[#F79E61] font-semibold hover:text-[#e88d50] hover:underline transition-colors"></a>
+                    <p className="mt-8 text-center text-sm text-gray-500">
+                        Chưa có tài khoản?{' '}
+                        <Link to="/register" id="register-link" className="text-[#F79E61] font-semibold hover:text-[#e88d50] hover:underline transition-colors">Đăng ký ngay</Link>
                     </p>
                 </div>
-                <p className="text-center text-xs text-gray-400 mt-6">© 2024 Confluent by Hoanghuy UDS.</p>
+                <p className="text-center text-xs text-gray-400 mt-6">© 2026 Confluent by Loi Nguyen.</p>
             </div>
         </div>
     );

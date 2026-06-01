@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import KPICard from '../../components/home/KPICard';
 import ProductivityLineChart from '../../components/home/ProductivityLineChart';
 import TaskPriorityList from '../../components/home/TaskPriorityList';
@@ -25,6 +26,7 @@ interface HomeViewProps {
 }
 
 const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
+  const navigate = useNavigate();
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -96,6 +98,7 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
                   {data.alerts.map((alert) => (
                     <div
                       key={alert.id}
+                      onClick={() => navigate(`/task/${alert.id}`)}
                       className="bg-[#f0884a] rounded-lg p-3 cursor-pointer hover:bg-[#D97706] transition-colors"
                     >
                       <div className="flex items-start gap-2">

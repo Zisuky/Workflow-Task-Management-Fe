@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
-import ManagerSearch from '../../components/dashboard/ManagerSearch';
-import MemberSelectView from '../../components/dashboard/MemberSelect';
-import ProjectSearchDropdown from './components/ProjectSearchDropdown';
-import DateInput from '../../components/common/DateInput';
-import type { Member } from '../../data/members.data';
-import { projectApi, type ProjectResponse } from '../task/infrastructure/project.client';
+import React, { useState, useEffect } from 'react';
+import ManagerSearch from '../../../components/dashboard/ManagerSearch';
+import MemberSelectView from '../../../components/dashboard/MemberSelect';
+import ProjectSearchDropdown from './ProjectSearchDropdown';
+import DateInput from '../../../components/common/DateInput';
+import type { Member } from '../../../data/members.data';
+import { projectApi, type ProjectResponse } from '../../task/infrastructure/project.client';
+import { taskGroupApi, type TaskGroup } from '../../task/infrastructure/taskGroup.client';
 
-interface AddJobModalViewProps {
+interface AddTaskModalViewProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -22,7 +23,7 @@ interface AddJobModalViewProps {
     onEndDateChange: (date: string) => void;
     defaultProjectId?: string;
 }
-const AddJobModalView: React.FC<AddJobModalViewProps> = ({
+const AddTaskModalView: React.FC<AddTaskModalViewProps> = ({
     isOpen,
     onClose,
     onSubmit,
@@ -40,21 +41,36 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
     const [projects, setProjects] = useState<ProjectResponse[]>([]);
     const [selectedProjectId, setSelectedProjectId] = useState(defaultProjectId || '');
     const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+    const [groups, setGroups] = useState<TaskGroup[]>([]);
+    const [isLoadingGroups, setIsLoadingGroups] = useState(false);
 
+    // Load projects
     useEffect(() => {
         if (isOpen) {
             setIsLoadingProjects(true);
             projectApi.getAll()
-                .then(res => {
-                    setProjects(res.data || []);
-                    if (defaultProjectId) {
-                        setSelectedProjectId(defaultProjectId);
-                    }
+                .then((res: any) => {
+                    const page = res?.data ?? res;
+                    const projectData: ProjectResponse[] = page?.content ?? (Array.isArray(page) ? page : []);
+                    setProjects(projectData);
                 })
-                .catch(err => console.error('Failed to load projects:', err))
+                .catch((err: Error) => console.error('Failed to load projects:', err))
                 .finally(() => setIsLoadingProjects(false));
         }
     }, [isOpen, defaultProjectId]);
+
+    // Load groups một lần khi modal mở — getAll để user có thể chọn từ mọi nhóm
+    useEffect(() => {
+        if (!isOpen) return;
+        setIsLoadingGroups(true);
+        taskGroupApi.getAll()
+            .then((res: any) => {
+                const data: TaskGroup[] = res?.data ?? (Array.isArray(res) ? res : []);
+                setGroups(data);
+            })
+            .catch(() => setGroups([]))
+            .finally(() => setIsLoadingGroups(false));
+    }, [isOpen]);
 
     useEffect(() => {
         if (isOpen) {
@@ -106,44 +122,30 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
                             className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                         />
                     </div>
-                    {/* Row 2: Loại công việc | Nhóm công việc | Dự án */}
+                    {/*Nhóm công việc | Dự án */}
                     <div className="grid grid-cols-3 gap-6">
-                        <div>
-                            <label className="block text-sm text-gray-600 mb-2">Loại công việc:</label>
-                            <select
-                                name="type"
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
-                            >
-                                <option value="Task">Task</option>
-                                <option value="Bug">Bug</option>
-                                <option value="Feature">Feature</option>
-                                <option value="Improvement">Improvement</option>
-                            </select>
-                        </div>
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Nhóm công việc:</label>
                             <select
                                 name="group"
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
+                                disabled={isLoadingGroups}
                             >
-                                <option value="Backend">Backend</option>
-                                <option value="Frontend">Frontend</option>
-                                <option value="Design">Design</option>
-                                <option value="Testing">Testing</option>
-                                <option value="UI/UX">UI/UX</option>
-                                <option value="Database">Database</option>
-                                <option value="Documentation">Documentation</option>
+                                <option value="">-- Chọn nhóm --</option>
+                                {groups.map((g) => (
+                                    <option key={g.id} value={g.id}>{g.name}</option>
+                                ))}
                             </select>
                         </div>
                         <div>
                             <label className="block text-sm text-gray-600 mb-2">Dự án: <span className="text-red-500">*</span></label>
-                            <ProjectSearchDropdown
-                                projects={projects}
-                                selectedProjectId={selectedProjectId}
-                                onSelect={setSelectedProjectId}
-                                isLoading={isLoadingProjects}
-                            />
-                            <input type="hidden" name="projectId" value={selectedProjectId} />
+                             <ProjectSearchDropdown
+                                 projects={projects}
+                                 selectedProjectId={selectedProjectId}
+                                 onSelect={setSelectedProjectId}
+                                 isLoading={isLoadingProjects}
+                             />
+                             <input type="hidden" name="projectId" value={selectedProjectId} />
                         </div>
                     </div>
                     {/* Row 3: Mô Tả */}
@@ -253,4 +255,4 @@ const AddJobModalView: React.FC<AddJobModalViewProps> = ({
         </div>
     );
 };
-export default AddJobModalView;
+export default AddTaskModalView;

@@ -1,41 +1,48 @@
-import type { JobGroup, JobPriority, JobStatus, JobType } from './index';
+import type { TaskGroup, TaskPriority, TaskStatus } from './index';
 
-export interface Job {
+// FE view model for a task — resolved from BE ProjectTask + lookups
+export interface Task {
   id: string;
-  code: string;
+  code: string;       // generated client-side: name prefix + id prefix
   name: string;
-  type: JobType;
-  group: JobGroup;
-  status: JobStatus;
-  manager: string;
-  assignee: string;
-  priority: JobPriority;
+  group: TaskGroup;    // resolved from taskGroupId via TaskGroup.name
+  status: TaskStatus;  // resolved from statusId via TaskStatus.code → display
+  priority: TaskPriority; // resolved from priorityId via TaskPriority.code → display
+  manager: string;    // resolved from TaskMember with role LEADER
+  assignee: string;   // resolved from TaskMember with role MEMBER
   startDate: string;
-  estimatedHours: number;
   endDate: string;
   description?: string;
-  project?: string;
+  project?: string;   // resolved from projectId via Project.name
   projectId?: string;
-  typeId?: string;
   taskGroupId?: string;
+  statusId?: string;    // raw UUID from BE — needed for status update
+  priorityId?: string;  // raw UUID from BE — needed for priority update
+  isPinned?: boolean;
+  parentTaskId?: string | null;
+  createdAt?: string;
 }
 
-export interface CreateJobInput {
+// Input for creating a task — maps to BE CreateTaskRequest
+export interface CreateTaskInput {
   name: string;
-  code?: string;
-  type: JobType;
-  group: JobGroup;
-  manager: string;
-  assignee: string;
-  priority: JobPriority;
+  priority: TaskPriority;
   startDate: string;
   endDate: string;
-  estimatedHours: number;
   description?: string;
-  project?: string;
   projectId?: string;
   assignerId?: string;
-  assigneeId?: string;
-  typeId?: string;
+  assigneeId?: string;  // comma-separated user IDs
   taskGroupId?: string;
+  statusId?: string;
+  priorityId?: string;
+}
+
+
+export interface WorkflowStatusId {
+  id: string;
+  workflowId ?: string;
+  statusId ?: string;
+  sortOder : Int16Array;
+  isFinal : boolean;
 }

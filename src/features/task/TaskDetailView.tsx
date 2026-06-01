@@ -1,23 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import type { Job } from '../../shared/types/task';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { Task } from '../../shared/types/task';
 import { commentApi, type Comment } from '../task/infrastructure/comment.client';
 import { historyApi, type HistoryItem } from '../task/infrastructure/history.client';
-import { taskTypeApi, type TaskType } from '../task/infrastructure/taskType.client';
 import { taskGroupApi, type TaskGroup } from '../task/infrastructure/taskGroup.client';
+import { taskPriorityApi, type TaskPriorityResponse } from '../task/infrastructure/taskPriority.client';
+import { projectApi } from '../task/infrastructure/project.client';
+import { userApi } from '../user/infrastructure/user.api';
+import apiClient from '../../shared/http/apiClient';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import { useFeatures } from '../../shared/hooks/useFeatures';
+import { TASK_PERMISSIONS } from './config/taskPermissions';
 
-export interface JobUpdateData {
-  priority: Job['priority'];
-  status: Job['status'];
-  group: Job['group'];
-  type: Job['type'];
+export interface TaskUpdateData {
+  priority: Task['priority'];
+  status: Task['status'];
+  group: Task['group'];
   description: string;
-  typeId?: string;
   taskGroupId?: string;
+  statusId?: string;
+  priorityId?: string;
 }
 
-interface JobDetailViewProps {
-  job: Job;
-  onUpdate?: (data: JobUpdateData) => void;
+interface WorkflowStage {
+  id: string;       // workflow_status.id
+  statusId: string; // task_status.id — dùng để update
+  name: string;     // task_status.name — hiển thị
+  sortOrder: number;
+  isFinal: boolean;
+}
+
+interface TaskDetailViewProps {
+  task: Task;
+  onUpdate?: (data: TaskUpdateData) => void;
   onDelete?: () => void;
 }
 const EditIcon = () => (
@@ -62,49 +76,64 @@ const ChevronDownIcon = () => (
     <path d="M19 9l-7 7-7-7" />
   </svg>
 );
-const formatDate = (dateString: string) => {
-  if (!dateString) return 'Chưa xác định';
+const formatDate = (dateInput: string | number[] | unknown): string => {
+  if (!dateInput) return 'Chưa xác định';
 
-  if (dateString.includes('-')) {
-    const isoDate = new Date(dateString);
-    if (!isNaN(isoDate.getTime())) {
-      const day = isoDate.getDate();
-      const month = isoDate.getMonth() + 1;
-      const year = isoDate.getFullYear();
-      return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+  // Handle array format from Jackson: [2026, 5, 1, 0, 0, 0]
+  if (Array.isArray(dateInput)) {
+    const [year, month, day] = dateInput as number[];
+    if (!year || !month || !day) return 'Chưa xác định';
+    return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+  }
+
+  const dateString = String(dateInput);
+  if (!dateString.trim()) return 'Chưa xác định';
+
+  // Handle ISO string: "2026-05-01T00:00:00" or "2026-05-01T00:00:00.000Z"
+  if (dateString.includes('T') || (dateString.includes('-') && !dateString.includes('/'))) {
+    // Split on T to get date part only — avoids timezone off-by-one
+    const datePart = dateString.split('T')[0]; // "2026-05-01"
+    const parts = datePart.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      if (year && month && day) {
+        return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+      }
     }
   }
 
-  const parts = dateString.split(' ');
-  const dateParts = parts[0].split('/');
-  if (dateParts.length !== 3) {
-    return 'Chưa xác định';
+  // Handle "DD/MM/YYYY" or "DD/MM/YYYY HH:mm:ss"
+  const dateParts = dateString.split(' ')[0].split('/');
+  if (dateParts.length === 3) {
+    const [day, month, year] = dateParts.map(Number);
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+    }
   }
-  const day = parseInt(dateParts[0], 10);
-  const month = parseInt(dateParts[1], 10);
-  const year = parseInt(dateParts[2], 10);
-  if (isNaN(day) || isNaN(month) || isNaN(year)) {
-    return 'Chưa xác định';
-  }
-  return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
+
+  return 'Chưa xác định';
 };
 const getInitials = (name: string) => {
   if (!name) return '??';
   return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
 };
-export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onDelete }) => {
+export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onUpdate, onDelete }) => {
   const [activeTab, setActiveTab] = useState('details');
-  const [priority, setPriority] = useState(job.priority);
-  const [status, setStatus] = useState(job.status);
-  const [description, setDescription] = useState(job.description || '');
+  const [priority, setPriority] = useState(task.priority);
+  const [status, setStatus] = useState(task.status);
+  const [description, setDescription] = useState(task.description || '');
 
   // Store IDs for type and group
-  const [selectedTypeId, setSelectedTypeId] = useState(job.typeId || '');
-  const [selectedGroupId, setSelectedGroupId] = useState(job.taskGroupId || '');
+  const [selectedGroupId, setSelectedGroupId] = useState(task.taskGroupId || '');
+  // statusId UUID — dùng khi gọi API update
+  const [selectedStatusId, setSelectedStatusId] = useState(task.statusId || '');
+  // priorityId UUID — dùng khi gọi API update
+  const [selectedPriorityId, setSelectedPriorityId] = useState(task.priorityId || '');
 
   // Lists from API
-  const [typesList, setTypesList] = useState<TaskType[]>([]);
   const [groupsList, setGroupsList] = useState<TaskGroup[]>([]);
+  const [workflowStages, setWorkflowStages] = useState<WorkflowStage[]>([]);
+  const [prioritiesList, setPrioritiesList] = useState<TaskPriorityResponse[]>([]);
 
   // Comments state
   const [comments, setComments] = useState<Comment[]>([]);
@@ -114,6 +143,17 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
   // History state
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  // userId → fullName map
+  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
+
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Permission gates — reuses cached result from useFeatures
+  const { can, isLoading: featuresLoading } = useFeatures();
+  const canUpdate = !featuresLoading && can(TASK_PERMISSIONS.UPDATE);
+  const canDelete = !featuresLoading && can(TASK_PERMISSIONS.DELETE);
 
   // Load comments when tab is active
   useEffect(() => {
@@ -129,28 +169,100 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
     }
   }, [activeTab]);
 
-  // Load types and groups on mount
+  // Load groups, priorities, and workflow stages on mount
   useEffect(() => {
     const loadLists = async () => {
       try {
-        const [typesRes, groupsRes] = await Promise.all([
-          taskTypeApi.getAll(),
+        // Load ALL groups (global + project-specific) and priorities
+        const [allGroupsRes, prioritiesRes, ...projectGroupsRes] = await Promise.all([
           taskGroupApi.getAll(),
+          taskPriorityApi.getActive(),
+          ...(task.projectId ? [taskGroupApi.getByProject(task.projectId)] : []),
         ]);
-        setTypesList(typesRes.data || []);
-        setGroupsList(groupsRes.data || []);
+        // Merge global + project groups, deduplicate by id
+        const allGroups: TaskGroup[] = allGroupsRes.data || [];
+        const projectGroups: TaskGroup[] = projectGroupsRes[0]?.data || [];
+        const mergedMap = new Map<string, TaskGroup>();
+        [...allGroups, ...projectGroups].forEach(g => mergedMap.set(g.id, g));
+        setGroupsList(Array.from(mergedMap.values()));
+        const priorities: TaskPriorityResponse[] = prioritiesRes.data || [];
+        setPrioritiesList(priorities);
+
+        // Load workflow stages từ workflow của project
+        if (task.projectId) {
+          try {
+            const workflowRes = await projectApi.getWorkflow(task.projectId) as any;
+            // WorkflowController trả về Workflow trực tiếp (không wrap ApiResponse)
+            const workflow = workflowRes?.data ?? workflowRes;
+            if (workflow?.id) {
+              // GET /api/workflows/{workflowId}/status/details → TaskStatus[]
+              const stagesRes = await apiClient.get(
+                `/workflows/${workflow.id}/status/details`
+              ) as any;
+              const taskStatuses: Array<{ id: string; name: string; code: string; sortOrder: number }> =
+                Array.isArray(stagesRes) ? stagesRes : (stagesRes?.data || []);
+              const stages: WorkflowStage[] = taskStatuses
+                .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+                .map(ts => ({
+                  id: ts.id,
+                  statusId: ts.id,
+                  name: ts.name,
+                  sortOrder: ts.sortOrder ?? 0,
+                  isFinal: false,
+                }));
+              setWorkflowStages(stages);
+            }
+          } catch {
+            // Fallback: dropdown hiển thị trạng thái hiện tại của task
+          }
+        }
       } catch (err) {
-        console.error('Failed to load types/groups:', err);
+        console.error('Failed to load lists:', err);
       }
     };
     loadLists();
-  }, []);
+  }, [task.projectId]);
+
+  // Resolve a userId to a display name, caching in state
+  const resolveUserName = useCallback(async (userId: string): Promise<string> => {
+    if (!userId) return 'Ẩn danh';
+    if (userNames.has(userId)) return userNames.get(userId)!;
+    try {
+      const user = await userApi.getById(userId);
+      const name = user?.name || userId;
+      setUserNames(prev => new Map(prev).set(userId, name));
+      return name;
+    } catch {
+      return userId;
+    }
+  }, [userNames]);
+
+  // Batch-resolve all userIds from comments + history
+  const resolveAllUserIds = useCallback(async (commentsList: Comment[], historyList: HistoryItem[]) => {
+    const ids = new Set<string>();
+    commentsList.forEach(c => { if (c.userId) ids.add(c.userId); });
+    historyList.forEach(h => { if (h.userId) ids.add(h.userId); });
+    const newMap = new Map(userNames);
+    await Promise.all(
+      Array.from(ids).filter(id => !newMap.has(id)).map(async (id) => {
+        try {
+          const user = await userApi.getById(id);
+          newMap.set(id, user?.name || id);
+        } catch {
+          newMap.set(id, id);
+        }
+      })
+    );
+    setUserNames(newMap);
+  }, [userNames]);
 
   const loadComments = async () => {
     setIsLoadingComments(true);
     try {
-      const res = await commentApi.getByTaskId(job.id);
-      setComments(res.data || []);
+      const res = await commentApi.getByTaskId(task.id);
+      const list = res.data || [];
+      setComments(list);
+      resolveAllUserIds(list, history);
     } catch (err) {
       console.error('Failed to load comments:', err);
     } finally {
@@ -161,8 +273,10 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
   const loadHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      const res = await historyApi.getByObjectId('TASK', job.id);
-      setHistory(res.data || []);
+      const res = await historyApi.getByObjectId('TASK', task.id);
+      const list = res.data || [];
+      setHistory(list);
+      resolveAllUserIds(comments, list);
     } catch (err) {
       console.error('Failed to load history:', err);
     } finally {
@@ -173,7 +287,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
-      await commentApi.create(job.id, newComment.trim());
+      await commentApi.create(task.id, newComment.trim());
       setNewComment('');
       await loadComments();
     } catch (err) {
@@ -181,46 +295,58 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
     }
   };
 
-  const selectedType = typesList.find(t => t.id === selectedTypeId);
   const selectedGroup = groupsList.find(g => g.id === selectedGroupId);
 
   const handleSave = () => {
     if (onUpdate) {
+      const selectedStage = workflowStages.find(s => s.statusId === selectedStatusId);
+      const statusDisplay = selectedStage?.name || status;
+      const selectedPriority = prioritiesList.find(p => p.id === selectedPriorityId);
+      const priorityDisplay = selectedPriority
+        ? (selectedPriority.code.charAt(0) + selectedPriority.code.slice(1).toLowerCase()) as Task['priority']
+        : priority;
       onUpdate({
-        priority,
-        status,
-        group: (selectedGroup?.name || job.group) as Job['group'],
-        type: (selectedType?.name || job.type) as Job['type'],
+        priority: priorityDisplay,
+        status: statusDisplay as Task['status'],
+        group: (selectedGroup?.name || task.group) as Task['group'],
         description,
-        typeId: selectedTypeId || job.typeId,
-        taskGroupId: selectedGroupId || job.taskGroupId,
+        taskGroupId: selectedGroupId || task.taskGroupId,
+        statusId: selectedStatusId || task.statusId,
+        priorityId: selectedPriorityId || task.priorityId,
       });
     }
   };
   return (
-    <div className="job-detail-page">
-      <div className="job-detail-content">
+    <div className="task-detail-page">
+      <div className="task-detail-content">
         {/* Left Panel - Form */}
-        <div className="job-detail-form-panel">
-          <div className="job-detail-card">
+        <div className="task-detail-form-panel">
+          <div className="task-detail-card">
             {/* Card Header */}
             <div className="card-header">
-              <h1 className="job-title-text">{job.name}</h1>
+              <h1 className="task-title-text">{task.name}</h1>
               <div className="action-buttons">
-                <button
-                  onClick={handleSave}
-                  className="update-button"
-                >
-                  <EditIcon />
-                  <span>Cập nhật</span>
-                </button>
-                <button
-                  onClick={onDelete}
-                  className="delete-button"
-                >
-                  <TrashIcon />
-                  <span>Xóa</span>
-                </button>
+                {canUpdate && (
+                  <button
+                    onClick={handleSave}
+                    className="update-button"
+                  >
+                    <EditIcon />
+                    <span>Cập nhật</span>
+                  </button>
+                )}
+                {canDelete && (
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="delete-button"
+                      title="Xóa công việc"
+                    >
+                      <TrashIcon />
+                      <span>Xóa</span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             {/* Form Fields */}
@@ -230,13 +356,20 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   <label className="field-label">Mức độ ưu tiên</label>
                   <div className="select-wrapper">
                     <select
-                      value={priority}
-                      onChange={(e) => setPriority(e.target.value as any)}
+                      value={selectedPriorityId}
+                      onChange={(e) => {
+                        setSelectedPriorityId(e.target.value);
+                        const p = prioritiesList.find(x => x.id === e.target.value);
+                        if (p) setPriority((p.code.charAt(0) + p.code.slice(1).toLowerCase()) as Task['priority']);
+                      }}
                       className="field-select"
                     >
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
+                      {prioritiesList.length === 0 && (
+                        <option value={task.priorityId}>{task.priority}</option>
+                      )}
+                      {prioritiesList.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
                     </select>
                     <ChevronDownIcon />
                   </div>
@@ -245,13 +378,23 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   <label className="field-label">Trạng thái hiện tại</label>
                   <div className="select-wrapper">
                     <select
-                      value={status}
-                      onChange={(e) => setStatus(e.target.value as any)}
+                      value={selectedStatusId}
+                      onChange={(e) => {
+                        setSelectedStatusId(e.target.value);
+                        const stage = workflowStages.find(s => s.statusId === e.target.value);
+                        if (stage) setStatus(stage.name as Task['status']);
+                      }}
                       className="field-select"
                     >
-                      <option value="To Do">To Do</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Done">Done</option>
+                      {/* Fallback: nếu workflow chưa load, hiển thị trạng thái hiện tại */}
+                      {workflowStages.length === 0 && (
+                        <option value={task.statusId}>{task.status}</option>
+                      )}
+                      {workflowStages.map((stage) => (
+                        <option key={stage.statusId} value={stage.statusId}>
+                          {stage.name}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDownIcon />
                   </div>
@@ -274,22 +417,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                     <ChevronDownIcon />
                   </div>
                 </div>
-                <div className="form-field">
-                  <label className="field-label">Loại công việc</label>
-                  <div className="select-wrapper">
-                    <select
-                      value={selectedTypeId}
-                      onChange={(e) => setSelectedTypeId(e.target.value)}
-                      className="field-select"
-                    >
-                      <option value="">-- Chọn loại --</option>
-                      {typesList.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-                    <ChevronDownIcon />
-                  </div>
-                </div>
+                
               </div>
               {/* Description */}
               <div className="form-field form-field-full">
@@ -313,8 +441,8 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
           </div>
         </div>
         {/* Right Panel - Info */}
-        <div className="job-detail-info-panel">
-          <div className="job-detail-card">
+        <div className="task-detail-info-panel">
+          <div className="task-detail-card">
             {/* Project & Code */}
             <div className="info-row info-row-two-cols">
               <div className="info-item">
@@ -322,23 +450,23 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   <FolderIcon />
                   <span>Dự án</span>
                 </div>
-                <div className="info-value-text">{job.project || 'Chưa xác định'}</div>
+                <div className="info-value-text">{task.project || 'Chưa xác định'}</div>
               </div>
               <div className="info-item">
                 <div className="info-label">
                   <span>Mã công việc</span>
                 </div>
-                <div className="info-value-text">{job.code}</div>
+                <div className="info-value-text">{task.code}</div>
               </div>
             </div>
-            {/* Read Date */}
+            {/* Created Date */}
             <div className="info-row">
               <div className="info-item">
                 <div className="info-label">
                   <CalendarIcon />
                   <span>Ngày tạo việc</span>
                 </div>
-                <div className="info-value-text info-value-bold">{formatDate(job.startDate)}</div>
+                <div className="info-value-text info-value-bold">{formatDate(task.createdAt || '')}</div>
               </div>
             </div>
             {/* Start Date */}
@@ -346,9 +474,9 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
               <div className="info-item">
                 <div className="info-label">
                   <CalendarIcon />
-                  <span>Ngày bắt đầu</span>
+                  <span>Thời gian bắt đầu</span>
                 </div>
-                <div className="info-value-text info-value-bold">{formatDate(job.startDate)}</div>
+                <div className="info-value-text info-value-bold">{formatDate(task.startDate)}</div>
               </div>
             </div>
             {/* End Date */}
@@ -356,9 +484,9 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
               <div className="info-item">
                 <div className="info-label">
                   <CalendarIcon />
-                  <span>Ngày đến hạn</span>
+                  <span>Thời gian kết thúc</span>
                 </div>
-                <div className="info-value-text info-value-bold">{formatDate(job.endDate)}</div>
+                <div className="info-value-text info-value-bold">{formatDate(task.endDate)}</div>
               </div>
             </div>
             {/* Description */}
@@ -380,9 +508,9 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                 </div>
                 <div className="person-row">
                   <div className="avatar-small avatar-blue">
-                    {getInitials(job.manager)}
+                    {getInitials(task.manager)}
                   </div>
-                  <span className="person-name-text">{job.manager}</span>
+                  <span className="person-name-text">{task.manager}</span>
                 </div>
               </div>
               <div className="info-item">
@@ -390,18 +518,20 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                   <UserIcon />
                   <span>Người thực hiện</span>
                 </div>
-                <div className="person-name-text" style={{ maxHeight: '80px', overflowY: 'auto' }}>
-                  {job.assignee}
+                <div className="person-row">
+                  <div className="avatar-small avatar-green">
+                    {getInitials(task.assignee)}
+                  </div>
+                  <span className="person-name-text">{task.assignee}</span>
                 </div>
               </div>
             </div>
           </div>
           {/* Separate Card for Tabs */}
-          <div className="job-detail-card job-detail-tabs-card">
+          <div className="task-detail-card task-detail-tabs-card">
             <div className="detail-tabs">
               <div className="tabs-header">
                 {[
-                  { id: 'details', label: 'Chi tiết' },
                   { id: 'comments', label: 'Bình luận' },
                   { id: 'history', label: 'Lịch sử' },
                   { id: 'logs', label: 'Nhật ký công việc' }
@@ -416,11 +546,6 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                 ))}
               </div>
               <div className="tabs-content">
-                {activeTab === 'details' && (
-                  <div className="tab-placeholder">
-                    <p>Chi tiết khác về công việc...</p>
-                  </div>
-                )}
                 {activeTab === 'comments' && (
                   <div className="comments-section">
                     {/* Add comment form */}
@@ -470,7 +595,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                             marginBottom: '8px'
                           }}>
                             <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
-                              <strong>{comment.userId}</strong> • {formatDate(comment.createdAt)}
+                              <strong>{userNames.get(comment.userId) || comment.userId}</strong> • {formatDate(comment.createdAt)}
                             </div>
                             <div style={{ fontSize: '14px', color: '#374151' }}>
                               {comment.comment}
@@ -500,7 +625,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                               {formatDate(item.createdAt)}
                             </div>
                             <div style={{ fontSize: '14px', color: '#374151' }}>
-                              <strong>{item.userId}</strong> đã {item.action.toLowerCase()} công việc
+                              <strong>{userNames.get(item.userId) || item.userId}</strong> đã {item.action.toLowerCase()} công việc
                             </div>
                           </div>
                         ))}
@@ -526,7 +651,7 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
                             <span style={{ margin: '0 8px' }}>•</span>
                             <span style={{ color: '#374151' }}>{item.action}</span>
                             <span style={{ margin: '0 8px' }}>•</span>
-                            <span style={{ color: '#6b7280' }}>{item.userId}</span>
+                            <span style={{ color: '#6b7280' }}>{userNames.get(item.userId) || item.userId}</span>
                           </div>
                         ))}
                       </div>
@@ -538,7 +663,18 @@ export const JobDetailView: React.FC<JobDetailViewProps> = ({ job, onUpdate, onD
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Bạn xác nhận xóa?"
+        message="Hành động này không thể hoàn tác."
+        confirmLabel="Có"
+        cancelLabel="Không"
+        confirmVariant="danger"
+        onConfirm={() => { setShowDeleteConfirm(false); onDelete?.(); }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 };
-export default JobDetailView;
+export default TaskDetailView;

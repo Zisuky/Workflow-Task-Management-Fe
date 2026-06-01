@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import type { CreateJobInput } from '../../../shared/types/task';
-import type { JobGroup, JobPriority, JobType } from '../../../shared/types';
+import React, { useState, useEffect } from 'react';
+import type { CreateTaskInput } from '../../../shared/types/task';
+import type { TaskPriority } from '../../../shared/types';
 import type { Member } from '../../../data/members.data';
-import AddJobModalView from '../AddJobModalView';
+import AddTaskModalView from './AddTaskModalView';
 const calculateWorkingDays = (startDate: string, endDate: string): number => {
     if (!startDate || !endDate) return 0;
     const start = new Date(startDate);
@@ -23,15 +23,16 @@ const calculateEstimatedHours = (startDate: string, endDate: string): number => 
     const workingDays = calculateWorkingDays(startDate, endDate);
     return workingDays * 8;
 };
-interface AddJobModalProps {
+interface AddTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: CreateJobInput) => void;
+    onSubmit: (data: CreateTaskInput) => void;
     defaultManager?: string;
+    defaultManagerId?: string;
     defaultProjectId?: string;
 }
-const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, defaultProjectId }) => {
-    const [manager, setManager] = useState('');
+const AddTaskModal: React.FC<AddTaskModalProps> = ({ isOpen, onClose, onSubmit, defaultManager = '', defaultManagerId = '', defaultProjectId }) => {
+    const [manager, setManager] = useState(defaultManager);
     const [managerId, setManagerId] = useState('');
     const [selectedMembers, setSelectedMembers] = useState<Member[]>([]);
     const today = new Date().toISOString().split('T')[0];
@@ -40,14 +41,14 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
     const [estimatedHours, setEstimatedHours] = useState(8);
     useEffect(() => {
         if (isOpen) {
-            setManager('');
-            setManagerId('');
+            setManager(defaultManager);
+            setManagerId(defaultManagerId);
             setSelectedMembers([]);
             setStartDate(today);
             setEndDate(today);
             setEstimatedHours(8);
         }
-    }, [isOpen, today]);
+    }, [isOpen, today, defaultManager, defaultManagerId]);
     useEffect(() => {
         const calculatedHours = calculateEstimatedHours(startDate, endDate);
         setEstimatedHours(calculatedHours);
@@ -67,23 +68,17 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
             assigneeIds: selectedMembers.map(m => m.id).join(',')
         });
 
-        const input: CreateJobInput = {
+        const input = {
             name: formData.get('name') as string,
-            type: formData.get('type') as JobType,
-            group: formData.get('group') as JobGroup,
+            taskGroupId: formData.get('group') as string,
             projectId: formData.get('projectId') as string,
             description: formData.get('description') as string,
-            manager: manager,
-            assignee: selectedMembers.map(m => m.name).join(', '),
             assignerId: managerId,
             assigneeId: selectedMembers.map(m => m.id).join(','),
             startDate: startDate,
             endDate: endDate,
-            estimatedHours: estimatedHours,
-            priority: formData.get('priority') as JobPriority,
-
-            code: 'JOB-' + Math.floor(Math.random() * 1000),
-        };
+            priority: formData.get('priority') as TaskPriority,
+        } as unknown as CreateTaskInput;
         onSubmit(input);
         setSelectedMembers([]);
         onClose();
@@ -102,7 +97,7 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
         }
     };
     return (
-        <AddJobModalView
+        <AddTaskModalView
             isOpen={isOpen}
             onClose={onClose}
             onSubmit={handleSubmit}
@@ -119,5 +114,5 @@ const AddJobModal: React.FC<AddJobModalProps> = ({ isOpen, onClose, onSubmit, de
         />
     );
 };
-export default AddJobModal;
+export default AddTaskModal;
 

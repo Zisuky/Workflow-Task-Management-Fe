@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import type { Job } from '../../shared/types/task';
-import type { JobStatus, JobPriority } from '../../shared/types';
+import type { Task } from '../../shared/types/task';
+import type { TaskStatus, TaskPriority } from '../../shared/types';
 import { EditableSelect } from '../../components/ui/EditableSelect';
 interface ColumnConfig {
     key: string;
@@ -148,8 +148,8 @@ interface FilterOptions {
     assignees: string[];
 }
 
-interface JobListViewProps {
-    jobs: Job[];
+interface TaskListViewProps {
+    tasks: Task[];
     isLoading: boolean;
     searchTerm: string;
     onSearchChange: (term: string) => void;
@@ -158,13 +158,13 @@ interface JobListViewProps {
     itemsPerPage: number;
     onPageChange: (page: number) => void;
     onItemsPerPageChange: (count: number) => void;
-    onJobClick?: (jobId: string) => void;
+    onTaskClick?: (taskId: string) => void;
     filters: FilterState;
     onFilterChange: (key: string, value: string) => void;
     filterOptions: FilterOptions;
 }
 
-const statusColors: Record<JobStatus, string> = {
+const statusColors: Record<TaskStatus, string> = {
     'To Do': 'bg-gray-500 text-white',
     'In Progress': 'bg-orange-500 text-white',
     'In Review': 'bg-blue-500 text-white',
@@ -173,7 +173,7 @@ const statusColors: Record<JobStatus, string> = {
     'On Hold': 'bg-yellow-500 text-white',
 };
 
-const priorityColors: Record<JobPriority, string> = {
+const priorityColors: Record<TaskPriority, string> = {
     'Low': 'bg-gray-500 text-white',
     'Medium': 'bg-blue-500 text-white',
     'High': 'bg-orange-500 text-white',
@@ -198,21 +198,19 @@ const formatDateTime = (dateString: string | undefined): string => {
     }
 };
 
-const COLUMNS_STORAGE_KEY = 'jobListColumns';
+const COLUMNS_STORAGE_KEY = 'taskListColumns';
 
 const defaultColumns: ColumnConfig[] = [
     { key: 'code', label: 'Mã công việc', visible: true },
-    { key: 'name', label: 'Tên công việc', visible: false },
-    { key: 'project', label: 'Dự án', visible: false },
-    { key: 'type', label: 'Loại công việc', visible: true },
-    { key: 'group', label: 'Nhóm công việc', visible: false },
+    { key: 'name', label: 'Tên công việc', visible: true },
+    { key: 'project', label: 'Dự án', visible: true },
+    { key: 'group', label: 'Nhóm công việc', visible: true },
     { key: 'status', label: 'Trạng thái', visible: true },
-    { key: 'manager', label: 'Người phụ trách', visible: false },
-    { key: 'assignee', label: 'Người thực hiện', visible: false },
+    { key: 'manager', label: 'Người phụ trách', visible: true },
+    { key: 'assignee', label: 'Người thực hiện', visible: true },
     { key: 'priority', label: 'Mức độ ưu tiên', visible: false },
-    { key: 'startDate', label: 'Thời gian bắt đầu', visible: false },
-    { key: 'estimatedHours', label: 'Thời gian dự kiến', visible: true },
-    { key: 'endDate', label: 'Thời gian kết thúc', visible: false },
+    { key: 'startDate', label: 'Thời gian bắt đầu', visible: true },
+    { key: 'endDate', label: 'Thời gian kết thúc', visible: true },
 ];
 
 const getInitialColumns = (): ColumnConfig[] => {
@@ -231,8 +229,8 @@ const getInitialColumns = (): ColumnConfig[] => {
     return defaultColumns;
 };
 
-const JobListView: React.FC<JobListViewProps> = ({
-    jobs,
+const TaskListView: React.FC<TaskListViewProps> = ({
+    tasks,
     isLoading,
     searchTerm,
     onSearchChange,
@@ -240,7 +238,7 @@ const JobListView: React.FC<JobListViewProps> = ({
     itemsPerPage,
     onPageChange,
     onItemsPerPageChange,
-    onJobClick,
+    onTaskClick,
     filters,
     onFilterChange,
     filterOptions,
@@ -267,40 +265,36 @@ const JobListView: React.FC<JobListViewProps> = ({
         });
     };
 
-    const renderCellContent = (job: Job, columnKey: string) => {
+    const renderCellContent = (task: Task, columnKey: string) => {
         switch (columnKey) {
             case 'code':
-                return <span className="text-[#F79E61] font-medium">{job.code}</span>;
+                return <span className="text-[#F79E61] font-medium">{task.code}</span>;
             case 'name':
-                return <span className="text-gray-800">{job.name}</span>;
+                return <span className="text-gray-800">{task.name}</span>;
             case 'project':
-                return <span className="text-gray-600">{job.project || 'Dự án'}</span>;
-            case 'type':
-                return <span className="text-gray-600">{job.type}</span>;
+                return <span className="text-gray-600">{task.project || 'Dự án'}</span>;
             case 'group':
-                return <span className="text-gray-600">{job.group}</span>;
+                return <span className="text-gray-600">{task.group}</span>;
             case 'status':
                 return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[job.status]}`}>
-                        {job.status}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[task.status]}`}>
+                        {task.status}
                     </span>
                 );
             case 'manager':
-                return <span className="text-gray-600">{job.manager}</span>;
+                return <span className="text-gray-600">{task.manager}</span>;
             case 'assignee':
-                return <span className="text-gray-600">{job.assignee}</span>;
+                return <span className="text-gray-600">{task.assignee}</span>;
             case 'priority':
                 return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[job.priority]}`}>
-                        {job.priority}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[task.priority]}`}>
+                        {task.priority}
                     </span>
                 );
             case 'startDate':
-                return <span className="text-gray-600 whitespace-nowrap">{formatDateTime(job.startDate)}</span>;
-            case 'estimatedHours':
-                return <span className="text-gray-600">{job.estimatedHours} giờ</span>;
+                return <span className="text-gray-600 whitespace-nowrap">{formatDateTime(task.startDate)}</span>;
             case 'endDate':
-                return <span className="text-gray-600 whitespace-nowrap">{formatDateTime(job.endDate)}</span>;
+                return <span className="text-gray-600 whitespace-nowrap">{formatDateTime(task.endDate)}</span>;
             default:
                 return null;
         }
@@ -393,15 +387,15 @@ const JobListView: React.FC<JobListViewProps> = ({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {jobs.map((job, index) => (
+                            {tasks.map((task, index) => (
                                 <tr
-                                    key={job.id || `job-${index}`}
-                                    onClick={() => onJobClick?.(job.id)}
+                                    key={task.id || `task-${index}`}
+                                    onClick={() => onTaskClick?.(task.id)}
                                     className="hover:bg-orange-50/50 transition-colors cursor-pointer"
                                 >
                                     {visibleColumns.map((column, colIndex) => (
-                                        <td key={`${job.id || index}-${column.key || colIndex}`} className="px-4 py-3 text-sm">
-                                            {renderCellContent(job, column.key)}
+                                        <td key={`${task.id || index}-${column.key || colIndex}`} className="px-4 py-3 text-sm">
+                                            {renderCellContent(task, column.key)}
                                         </td>
                                     ))}
                                 </tr>
@@ -471,4 +465,4 @@ const JobListView: React.FC<JobListViewProps> = ({
         </div>
     );
 };
-export default JobListView;
+export default TaskListView;

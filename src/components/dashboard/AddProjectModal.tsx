@@ -10,17 +10,17 @@ interface AddProjectModalProps {
     defaultManagerId?: string;
 }
 
+// Aligned with BE CreateProjectRequest — removed code, group, startDate, endDate
 export interface ProjectFormData {
     name: string;
-    code: string;
-    group: string;
     description: string;
-    manager: string;
-    members: string;
+    manager: string;    // display only
+    members: string;    // display only
     leaderId: string;
     memberIds: string[];
-    startDate: string;
-    endDate: string;
+    workflowId?: string;
+    startDate?: string;
+    endDate?: string;
 }
 
 const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSubmit }) => {
@@ -54,15 +54,14 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
         }
         onSubmit({
             name: name,
-            code: '',
-            group: formData.get('group') as string || '',
             description: formData.get('description') as string || '',
             manager: manager,
             members: selectedMembers.map(m => m.name).join(', '),
             leaderId: managerId,
             memberIds: selectedMembers.map(m => m.id),
-            startDate: formData.get('startDate') as string || '',
-            endDate: formData.get('endDate') as string || '',
+            workflowId: selectedTemplateId || undefined,
+            startDate,
+            endDate,
         });
         setSelectedMembers([]);
         setManagerId('');
@@ -72,13 +71,6 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
         setSelectedMembers([]);
         setManagerId('');
         onClose();
-    };
-
-    const handleStartDateChange = (date: string) => {
-        setStartDate(date);
-        if (endDate < date) {
-            setEndDate(date);
-        }
     };
 
     const handleManagerChange = (name: string, id?: string) => {
@@ -101,7 +93,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({ isOpen, onClose, onSu
             onSubmit={handleSubmit}
             onManagerChange={handleManagerChange}
             onMembersChange={setSelectedMembers}
-            onStartDateChange={handleStartDateChange}
+            onStartDateChange={setStartDate}
             onEndDateChange={setEndDate}
             selectedTemplateId={selectedTemplateId}
             onTemplateChange={setSelectedTemplateId}

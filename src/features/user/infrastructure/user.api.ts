@@ -1,6 +1,7 @@
-import type { LoginCredentials, User } from "../../../shared/types";
+import type { LoginCredentials, User, RegisterRequest, ResetPasswordRequest } from "../../../shared/types";
 import apiClient from "../../../shared/http/apiClient";
 import { useEffect, useRef, useState } from "react";
+import { clearFeaturesCache } from "../../../shared/hooks/useFeatures";
 
 let currentUserSession: User | null = null;
 
@@ -62,7 +63,7 @@ export const userApi = {
         return currentUserSession;
       }
 
-      throw new Error(response.message || "Login failed");
+      throw new Error("Login failed: no token received");
     } catch (error) {
       const err = error as ApiError;
 
@@ -90,7 +91,11 @@ export const userApi = {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     currentUserSession = null;
+    currentUserCache = null;
+    hasInitialized = false;
+    loadingPromise = null;
     this.clearCache();
+    clearFeaturesCache();
   },
 
   getCurrentUser(): User | null {
@@ -111,9 +116,8 @@ export const userApi = {
     const token = localStorage.getItem('token') || localStorage.getItem('authToken');
     if (!token) return null;
     try {
-      const response = await apiClient.get('/auth/me', { validateStatus: (status) => status < 500 });
-      if (response.status >= 400) return null;
-      const raw = response.data?.result || response.data;
+      const data: any = await apiClient.get('/auth/me');
+      const raw = data?.data || data?.result || data;
       if (!raw) return null;
       const user = mapRawToUser(raw);
       if (user.id) {
@@ -128,8 +132,8 @@ export const userApi = {
   async getById(userId: string): Promise<User | null> {
     if (userByIdCache.has(userId)) return userByIdCache.get(userId)!;
     try {
-      const response = await apiClient.get(`/users/profile/${userId}`);
-      const raw = response.data?.result || response.data;
+      const data: any = await apiClient.get(`/users/profile/${userId}`);
+      const raw = data?.data || data?.result || data;
       if (!raw) return null;
       const user = mapRawToUser(raw, userId);
       userByIdCache.set(user.id, user);
@@ -144,8 +148,9 @@ export const userApi = {
     if (loadingAllPromise) return loadingAllPromise;
     loadingAllPromise = (async () => {
       try {
-        const response = await apiClient.get('/users');
-        const rawList = response.data?.result || response.data || [];
+        // GET /users/all — unpaged endpoint, use for dropdowns/search only
+        const data: any = await apiClient.get('/users/all');
+        const rawList = data?.data || data?.result || data || [];
         if (!Array.isArray(rawList)) return [];
         const users = rawList.map((raw: any) => {
           const u = mapRawToUser(raw);
@@ -169,6 +174,18 @@ export const userApi = {
     const q = query.trim().toLowerCase();
     if (!q) return all;
     return all.filter(u => u.name.toLowerCase().includes(q) || u.account.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+  },
+
+  async register(data: RegisterRequest): Promise<void> {
+    await apiClient.post("/auth/register", data);
+  },
+
+  async forgotPassword(accountOrEmail: string): Promise<void> {
+    await apiClient.post("/auth/forgot-password", { accountOrEmail });
+  },
+
+  async resetPassword(data: ResetPasswordRequest): Promise<void> {
+    await apiClient.post("/auth/reset-password", data);
   },
 
   clearCache() {

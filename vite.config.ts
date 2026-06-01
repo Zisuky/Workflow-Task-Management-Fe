@@ -24,19 +24,21 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       proxy: {
-        '/api/pmcc/v1/auth': {
-          target: 'https://office.uds.com.vn',
+        '/api/auth': {
+          target: localBeUrl,
           changeOrigin: true,
           secure: false,
+          rewrite: (path) => path.replace('/api/auth', '/api/auth'),
         },
 
-        '/api/pmcc/v1/profiles': {
-          target: 'https://office.uds.com.vn',
+        '/api/profiles': {
+          target: localBeUrl,
           changeOrigin: true,
           secure: false,
+          rewrite: (path) => path.replace('/api/profiles', '/api/users/profile'),
         },
 
-        '/api/pmcc/v1/employees': {
+        '/api/employees': {
           target: 'https://office.uds.com.vn',
           changeOrigin: true,
           secure: false,
@@ -47,74 +49,74 @@ export default defineConfig(({ mode }) => {
           },
         },
 
-        '/api/pmcc/v1/dashboard': {
+        '/api/dashboard': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/dashboard', '/api/dashboard'),
+          rewrite: (path) => path.replace('/api/dashboard', '/api/dashboard'),
         },
 
-        '/api/pmcc/v1/tasks': {
+        '/api/tasks': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/tasks', '/api/tasks'),
+          rewrite: (path) => path.replace('/api/tasks', '/api/tasks'),
         },
 
-        '/api/pmcc/v1/projects': {
+        '/api/projects': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/projects', '/api/projects'),
+          rewrite: (path) => path.replace('/api/projects', '/api/projects'),
         },
 
-        '/api/pmcc/v1/users': {
+        '/api/users': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/users', '/api/users'),
+          rewrite: (path) => path.replace('/api/users', '/api/users'),
         },
 
-        '/api/pmcc/v1/type-tasks': {
+        '/api/type-tasks': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/type-tasks', '/api/type-tasks'),
+          rewrite: (path) => path.replace('/api/type-tasks', '/api/type-tasks'),
         },
 
-        '/api/pmcc/v1/task-groups': {
+        '/api/task-groups': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/task-groups', '/api/task-groups'),
+          rewrite: (path) => path.replace('/api/task-groups', '/api/task-groups'),
         },
 
-        '/api/pmcc/v1/history': {
+        '/api/history': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/history', '/api/history'),
+          rewrite: (path) => path.replace('/api/history', '/api/history'),
         },
 
-        '/api/pmcc/v1/companies': {
+        '/api/companies': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/companies', '/api/companies'),
+          rewrite: (path) => path.replace('/api/companies', '/api/companies'),
         },
 
-        '/api/pmcc/v1/project-details': {
+        '/api/project-details': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/project-details', '/api/project-details'),
+          rewrite: (path) => path.replace('/api/project-details', '/api/project-details'),
         },
 
-        '/api/pmcc/v1/task-details': {
+        '/api/task-details': {
           target: localBeUrl,
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace('/api/pmcc/v1/task-details', '/api/task-details'),
+          rewrite: (path) => path.replace('/api/task-details', '/api/task-details'),
         },
 
         '/api': {

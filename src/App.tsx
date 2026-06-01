@@ -2,17 +2,30 @@ import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from './components/all/MainLayout';
 import AddProjectModal from './components/dashboard/AddProjectModal';
-import AddJobModal from './features/job/components/AddJobModal';
-import { DashboardPage, JobListPage, JobDetailPage, TimelinePage, HomePage, WorkflowPage, TemplatePage, SettingsPage } from './features';
+import AddTaskModal from './features/task/components/AddTaskModal';
+import { DashboardPage, TaskListPage, TaskDetailPage, TimelinePage, HomePage, WorkflowPage, TemplatePage, SettingsPage } from './features';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import { projectRepository as projectService } from './features/project/infrastructure/project.api';
 import { userApi as authService } from './features/user/infrastructure/user.api';
-import { taskRepository as jobService } from './features/task/infrastructure/task.repository';
+import { taskRepository as taskService } from './features/task/infrastructure/task.repository';
 import type { User } from './shared/types';
-import type { CreateJobInput } from './shared/types/task';
+import type { CreateTaskInput } from './shared/types/task';
 import type { CreateProjectInput } from './shared/types/project';
 import { ToastProvider, useToast } from './ui/toast';
 import { useUserStore } from './features/user/application/user.store';
+import { useFeatures } from './shared/hooks/useFeatures';
+
+/** Route guard: redirects to /home if the user lacks the required feature code. */
+const FeatureRoute: React.FC<{ featureCode: string; children: React.ReactNode }> = ({
+  featureCode,
+  children,
+}) => {
+  const { can, isLoading } = useFeatures();
+  if (isLoading) return null;
+  return can(featureCode) ? <>{children}</> : <Navigate to="/home" replace />;
+};
 
 function App() {
   return (
@@ -25,13 +38,13 @@ function App() {
 function AppWithToast() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
-  const setSession = useUserStore(state => state.setSession);
-  const clearSession = useUserStore(state => state.clearSession);
+  const setSession = useUserStore((state: import('./features/user/application/user.store').UserState) => state.setSession);
+  const clearSession = useUserStore((state: import('./features/user/application/user.store').UserState) => state.clearSession);
 
 
   useEffect(() => {
@@ -58,15 +71,16 @@ function AppWithToast() {
     setCurrentUser(null);
     setIsAuthenticated(false);
     clearSession();
+    window.location.href = '/login';
   };
-  const handleAddJob = useCallback(async (input: CreateJobInput) => {
+  const handleAddTask = useCallback(async (input: CreateTaskInput) => {
     try {
-      await jobService.addJob(input);
-      setIsJobModalOpen(false);
+      await taskService.addTask(input);
+      setIsTaskModalOpen(false);
       setRefreshKey(prev => prev + 1);
       toast.success('Tạo công việc thành công');
     } catch (error) {
-      console.error('Failed to add job:', error);
+      console.error('Failed to add task:', error);
       toast.error('Tạo công việc thất bại');
     }
   }, [toast]);
@@ -81,7 +95,6 @@ function AppWithToast() {
       toast.error('Tạo dự án thất bại');
     }
   }, [toast]);
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -95,6 +108,8 @@ function AppWithToast() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
@@ -105,13 +120,13 @@ function AppWithToast() {
       <AppContent
         isAuthenticated={isAuthenticated}
         currentUser={currentUser}
-        isJobModalOpen={isJobModalOpen}
+        isTaskModalOpen={isTaskModalOpen}
         isProjectModalOpen={isProjectModalOpen}
         refreshKey={refreshKey}
         handleLogout={handleLogout}
-        handleAddJob={handleAddJob}
+        handleAddTask={handleAddTask}
         handleAddProject={handleAddProject}
-        setIsJobModalOpen={setIsJobModalOpen}
+        setIsTaskModalOpen={setIsTaskModalOpen}
         setIsProjectModalOpen={setIsProjectModalOpen}
       />
     </BrowserRouter>
@@ -120,24 +135,24 @@ function AppWithToast() {
 const AppContent: React.FC<{
   isAuthenticated: boolean;
     currentUser: User | null;
-  isJobModalOpen: boolean;
+  isTaskModalOpen: boolean;
   isProjectModalOpen: boolean;
   refreshKey: number;
   handleLogout: () => void;
-  handleAddJob: (input: CreateJobInput) => void;
+  handleAddTask: (input: CreateTaskInput) => void;
   handleAddProject: (input: CreateProjectInput) => void;
-  setIsJobModalOpen: (open: boolean) => void;
+  setIsTaskModalOpen: (open: boolean) => void;
   setIsProjectModalOpen: (open: boolean) => void;
 }> = ({
   isAuthenticated,
   currentUser,
-  isJobModalOpen,
+  isTaskModalOpen,
   isProjectModalOpen,
   refreshKey,
   handleLogout,
-  handleAddJob,
+  handleAddTask,
   handleAddProject,
-  setIsJobModalOpen,
+  setIsTaskModalOpen,
   setIsProjectModalOpen,
 }) => {
     const navigate = useNavigate();
@@ -150,11 +165,11 @@ const AppContent: React.FC<{
       if (location.pathname.includes('/template') && location.search.includes('action=add')) {
         navigate('/template');
       } else {
-        navigate('/job');
+        navigate('/task');
       }
     };
     const handleTimeline = () => {
-      navigate('/job/timeline');
+      navigate('/task/timeline');
     };
 
     const handleAddTemplateClick = () => {
@@ -168,6 +183,8 @@ const AppContent: React.FC<{
       return (
         <Routes>
           <Route path="/login" element={<LoginPage onLoginSuccess={() => { }} />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       );
@@ -176,7 +193,7 @@ const AppContent: React.FC<{
       <>
         <MainLayout
           onLogout={handleLogout}
-          onAddJob={() => setIsJobModalOpen(true)}
+          onAddTask={() => setIsTaskModalOpen(true)}
           onAddProject={() => setIsProjectModalOpen(true)}
           onAddTemplate={handleAddTemplateClick}
           onBack={handleBack}
@@ -186,24 +203,57 @@ const AppContent: React.FC<{
         >
           <Routes>
             <Route path="/home" element={<HomePage />} />
-            <Route path="/project" element={<DashboardPage key={refreshKey} />} />
-            <Route path="/dashboard" element={<DashboardPage key={refreshKey} />} />
-            <Route path="/job" element={<JobListPage key={refreshKey} />} />
-            <Route path="/job/timeline" element={<TimelinePage key={refreshKey} />} />
-            <Route path="/job/:id" element={<JobDetailPage />} />
-            <Route path="/workflow" element={<WorkflowPage key={refreshKey} />} />
-            <Route path="/template" element={<TemplatePage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/project" element={
+              <FeatureRoute featureCode="PROJECT_VIEW">
+                <DashboardPage key={refreshKey} />
+              </FeatureRoute>
+            } />
+            <Route path="/dashboard" element={
+              <FeatureRoute featureCode="PROJECT_VIEW">
+                <DashboardPage key={refreshKey} />
+              </FeatureRoute>
+            } />
+            <Route path="/task" element={
+              <FeatureRoute featureCode="TASK_VIEW">
+                <TaskListPage key={refreshKey} />
+              </FeatureRoute>
+            } />
+            <Route path="/task/timeline" element={
+              <FeatureRoute featureCode="TASK_VIEW">
+                <TimelinePage key={refreshKey} />
+              </FeatureRoute>
+            } />
+            <Route path="/task/:id" element={
+              <FeatureRoute featureCode="TASK_VIEW">
+                <TaskDetailPage />
+              </FeatureRoute>
+            } />
+            <Route path="/workflow" element={
+              <FeatureRoute featureCode="WORKFLOW_VIEW">
+                <WorkflowPage key={refreshKey} />
+              </FeatureRoute>
+            } />
+            <Route path="/template" element={
+              <FeatureRoute featureCode="WORKFLOW_VIEW">
+                <TemplatePage />
+              </FeatureRoute>
+            } />
+            <Route path="/settings" element={
+              <FeatureRoute featureCode='SETTING_VIEW'>
+                <SettingsPage />
+              </FeatureRoute>
+            } />
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/login" element={<Navigate to="/home" replace />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Routes>
         </MainLayout>
-        <AddJobModal
-          isOpen={isJobModalOpen}
-          onClose={() => setIsJobModalOpen(false)}
-          onSubmit={handleAddJob}
+        <AddTaskModal
+          isOpen={isTaskModalOpen}
+          onClose={() => setIsTaskModalOpen(false)}
+          onSubmit={handleAddTask}
           defaultManager={currentUser?.name || ''}
+          defaultManagerId={currentUser?.id || ''}
           defaultProjectId={currentProjectId}
         />
         <AddProjectModal

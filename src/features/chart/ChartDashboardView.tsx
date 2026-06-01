@@ -45,23 +45,8 @@ const ChartCard = ({ title, children, className = "" }: { title: string; childre
 const ChartDashboardView: React.FC<ChartDashboardViewProps> = ({ data, isLoading = false }) => {
   const navigate = useNavigate();
 
-  const handleAlertClick = (taskCode: string) => {
-    // Map taskCode to job ID for navigation
-    const jobIdMap: { [key: string]: string } = {
-      'UIUX001': '1',
-      '0012911': '2',
-      'TESTING001': '3',
-      'DATABASE001': '4',
-      'DOCUMENTATION001': '5',
-      'FRONTEND001': '6',
-      'BACKEND002': '7',
-      'DESIGN001': '8'
-    };
-
-    const jobId = jobIdMap[taskCode];
-    if (jobId) {
-      navigate(`/job/${jobId}`);
-    }
+  const handleAlertClick = (taskId: string) => {
+    navigate(`/task/${taskId}`);
   };
   if (isLoading) {
     return (
@@ -125,7 +110,7 @@ const ChartDashboardView: React.FC<ChartDashboardViewProps> = ({ data, isLoading
                       <AlertItem
                         key={alert.id}
                         alert={alert}
-                        onClick={() => handleAlertClick(alert.taskCode)}
+                        onClick={() => handleAlertClick(alert.id)}
                       />
                     ))}
                   </div>

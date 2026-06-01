@@ -5,104 +5,101 @@ import { userApi } from '../../user/infrastructure/user.api';
 import { mockProjects } from '../../../data/projects.data';
 
 let usersCache: User[] | null = null;
-const PINNED_PROJECTS_KEY = 'pinnedProjectIds';
-const projects = [...mockProjects];
 
 const getUsers = async (): Promise<User[]> => {
   if (!usersCache) usersCache = await userApi.getAll();
   return usersCache;
 };
 
-const getUserName = (users: User[], userId: string): string => users.find(u => u.id === userId)?.name || userId;
-
-const getPinnedProjectIds = (): Set<string> => {
-  try {
-    const stored = localStorage.getItem(PINNED_PROJECTS_KEY);
-    if (stored) return new Set(JSON.parse(stored));
-  } catch {
-    // Ignore malformed local storage data and fallback to empty set.
-  }
-  return new Set();
-};
-
-const savePinnedProjectIds = (ids: Set<string>): void => {
-  try {
-    localStorage.setItem(PINNED_PROJECTS_KEY, JSON.stringify([...ids]));
-  } catch {
-    // Ignore local storage write failures.
-  }
-};
+const getUserName = (users: User[], userId: string): string =>
+  users.find(u => u.id === userId)?.name || userId;
 
 export const projectRepository = {
   async getProjects(): Promise<Project[]> {
     try {
-      const response = await projectApi.getAll();
+      // BE returns Page<Project> — access .content for the items
+      const response = await projectApi.getAll(0, 100);
+      const projectsList = response.data?.content ?? response.data ?? [];
       const users = await getUsers();
-      const projectsList = await Promise.all(response.data.map(async (projectResponse: { id: string; projectCode: string; name: string; description: string | null; createdAt: string; }) => {
-        try {
-          const membersResponse = await projectApi.getMembers(projectResponse.id);
-          const members = membersResponse.data || [];
-          const leaderId = members.length > 0 ? members[0].leaderId : null;
-          return {
-            id: projectResponse.id,
-            code: projectResponse.projectCode,
-            name: projectResponse.name,
-            manager: leaderId ? getUserName(users, leaderId) : 'Chưa có',
-            assignee: members.length > 0 ? members.map((m: { userId: string }) => getUserName(users, m.userId)).join(', ') : 'Chưa có',
-            isPinned: false,
-            description: projectResponse.description || '',
-            group: 'Development',
-            startDate: projectResponse.createdAt,
-            endDate: '',
-          } satisfies Project;
-        } catch {
-          return {
-            id: projectResponse.id,
-            code: projectResponse.projectCode,
-            name: projectResponse.name,
-            manager: 'Đang tải...',
-            assignee: 'Đang tải...',
-            isPinned: false,
-            description: projectResponse.description || '',
-            group: 'Development',
-            startDate: projectResponse.createdAt,
-            endDate: '',
-          } satisfies Project;
-        }
-      }));
 
-      const pinnedIds = getPinnedProjectIds();
-      return projectsList.map(project => ({
-        ...project,
-        isPinned: pinnedIds.has(project.id),
-      }));
+      return Promise.all(
+        projectsList.map(async (p: {
+          id: string;
+          projectCode: string;
+          name: string;
+          description: string | null;
+          isPinned: boolean;
+          workflowId: string | null;
+          createdAt: string;
+        }) => {
+          try {
+            const [membersResponse, detailResponse] = await Promise.all([
+              projectApi.getMembers(p.id),
+              projectApi.getDetail(p.id).catch(() => ({ data: null })),
+            ]);
+            const members = membersResponse.data ?? [];
+            const detail = detailResponse.data;
+            // pmcc.project_member has no role/leader column — first member treated as manager
+            const managerMember = members.length > 0 ? members[0] : null;
+            return {
+              id: p.id,
+              code: p.projectCode,
+              name: p.name,
+              manager: managerMember ? getUserName(users, managerMember.userId) : 'Chưa có',
+              assignee: members.length > 0
+                ? members.map((m: { userId: string }) => getUserName(users, m.userId)).join(', ')
+                : 'Chưa có',
+              isPinned: p.isPinned ?? false,
+              description: p.description || '',
+              workflowId: p.workflowId,
+              startDate: detail?.startDate ?? null,
+              endDate: detail?.endDate ?? null,
+            } satisfies Project;
+          } catch {
+            return {
+              id: p.id,
+              code: p.projectCode,
+              name: p.name,
+              manager: 'Đang tải...',
+              assignee: 'Đang tải...',
+              isPinned: p.isPinned ?? false,
+              description: p.description || '',
+              workflowId: p.workflowId,
+              startDate: null,
+              endDate: null,
+            } satisfies Project;
+          }
+        })
+      );
     } catch {
-      return [...projects];
+      return [...mockProjects];
     }
   },
 
   async addProject(input: CreateProjectInput): Promise<Project> {
-    const userStr = localStorage.getItem('user');
-    const user = userStr ? JSON.parse(userStr) as { id?: string } : null;
-    const fallbackUserId = user?.id || 'system';
+    // BE CreateProjectRequest: name, description, leaderId, memberIds — no companyId
+    // BE expects LocalDateTime → convert "YYYY-MM-DD" to "YYYY-MM-DDTHH:mm:ss"
     const response = await projectApi.create({
       name: input.name,
       description: input.description || '',
-      companyId: 'temp-company-id',
-      leaderId: input.leaderId || fallbackUserId,
+      leaderId: input.leaderId,
       memberIds: input.memberIds || [],
-    });
+      workflowId: input.workflowId,
+      startDate: `${input.startDate}T00:00:00`,
+      endDate: `${input.endDate}T23:59:59`,
+    }); 
+    const p = response.data;
     return {
-      id: response.data.id,
-      code: response.data.projectCode,
-      name: response.data.name,
+      id: p.id,
+      code: p.projectCode,
+      name: p.name,
       manager: 'Đang tải...',
       assignee: 'Đang tải...',
-      isPinned: false as const,
-      description: response.data.description || '',
-      group: 'Development',
-      startDate: response.data.createdAt,
-      endDate: '',
+      isPinned: false,
+      description: p.description || '',
+      workflowId: p.workflowId,
+      startDate: input.startDate ?? null,
+      endDate: input.endDate ?? null,
     };
   },
 
@@ -112,17 +109,18 @@ export const projectRepository = {
         name: updates.name,
         description: updates.description,
       });
+      const p = response.data;
       return {
-        id: response.data.id,
-        code: response.data.projectCode,
-        name: response.data.name,
+        id: p.id,
+        code: p.projectCode,
+        name: p.name,
         manager: 'Đang tải...',
         assignee: 'Đang tải...',
-        isPinned: false as const,
-        description: response.data.description || '',
-        group: 'Development',
-        startDate: response.data.createdAt,
-        endDate: '',
+        isPinned: p.isPinned ?? false,
+        description: p.description || '',
+        workflowId: p.workflowId,
+        startDate: updates.startDate ?? null,
+        endDate: updates.endDate ?? null,
       };
     } catch {
       return null;
@@ -138,22 +136,12 @@ export const projectRepository = {
     }
   },
 
-  async togglePin(id: string): Promise<Project | null> {
-    const pinnedIds = getPinnedProjectIds();
-    const currentlyPinned = pinnedIds.has(id);
-    if (currentlyPinned) pinnedIds.delete(id); else pinnedIds.add(id);
-    savePinnedProjectIds(pinnedIds);
-    return {
-      id,
-      isPinned: !currentlyPinned,
-      code: '',
-      name: '',
-      manager: '',
-      assignee: '',
-      group: '',
-      description: '',
-      startDate: '',
-      endDate: '',
-    } as Project;
+  // Uses real BE endpoints: PATCH /projects/{id}/pinned and PATCH /projects/{id}/unpinned
+  async pinProject(id: string): Promise<void> {
+    await projectApi.pin(id);
+  },
+
+  async unpinProject(id: string): Promise<void> {
+    await projectApi.unpin(id);
   },
 };

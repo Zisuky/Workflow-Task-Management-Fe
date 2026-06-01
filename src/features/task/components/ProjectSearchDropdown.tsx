@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { ProjectResponse } from '../../task/infrastructure/project.client';
 
 interface ProjectSearchDropdownProps {
@@ -18,11 +18,12 @@ const ProjectSearchDropdown: React.FC<ProjectSearchDropdownProps> = ({
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const selectedProject = projects.find(p => p.id === selectedProjectId);
+    const safeProjects = Array.isArray(projects) ? projects : [];
+    const selectedProject = safeProjects.find(p => p && p.id === selectedProjectId);
 
     useEffect(() => {
         if (selectedProject) {
-            setSearchTerm(selectedProject.name);
+            setSearchTerm(selectedProject.name || '');
         } else {
             setSearchTerm('');
         }
@@ -33,7 +34,7 @@ const ProjectSearchDropdown: React.FC<ProjectSearchDropdownProps> = ({
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
                 if (selectedProject) {
-                    setSearchTerm(selectedProject.name);
+                    setSearchTerm(selectedProject.name || '');
                 }
             }
         };
@@ -41,9 +42,11 @@ const ProjectSearchDropdown: React.FC<ProjectSearchDropdownProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [selectedProject]);
 
-    const filteredProjects = projects.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.projectCode?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredProjects = safeProjects.filter(p =>
+        p && (
+            (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (p.projectCode && p.projectCode.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
     );
 
     const handleInputChange = (value: string) => {
@@ -55,8 +58,9 @@ const ProjectSearchDropdown: React.FC<ProjectSearchDropdownProps> = ({
     };
 
     const handleSelect = (project: ProjectResponse) => {
+        if (!project) return;
         onSelect(project.id);
-        setSearchTerm(project.name);
+        setSearchTerm(project.name || '');
         setIsOpen(false);
     };
 

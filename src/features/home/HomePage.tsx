@@ -24,8 +24,8 @@ const priorityColors: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  'NOT_STARTED': '#8B5CF6',
-  'IN_PROGRESS': '#EC4899',
+  'NOT_STARTED': '#d1c5ebff',
+  'IN_PROGRESS': '#f9420fff',
   'COMPLETED': '#22C55E',
 };
 
@@ -56,7 +56,7 @@ const HomePage: React.FC = () => {
           dashboardService.getPriority(),
           dashboardService.getTaskStatus(),
           dashboardService.getAlerts(),
-          dashboardService.getTaskCountByType(),
+          dashboardService.getTaskCountByGroup(),
         ]);
 
         const kpis = {

@@ -100,4 +100,15 @@ export const dashboardRepository = {
       return [];
     }
   },
+
+  async getCompletedProjectsCount(): Promise<number> {
+    try {
+      const { projectApi } = await import('../../task/infrastructure/project.client');
+      const response = await projectApi.getAll(0, 1000);
+      const list: Array<{ status: string }> = response.data?.content ?? response.data ?? [];
+      return list.filter(p => p.status === 'COMPLETED').length;
+    } catch {
+      return 0;
+    }
+  },
 };

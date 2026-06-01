@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { workflowApi, type WorkflowStatusDetail } from '../workflow/infrastructure/workflow.client';
 import type { Workflow } from '../workflow/domain/workflow.entity';
 import { useToast } from '../../ui/toast';
@@ -29,6 +30,7 @@ const TemplateView: React.FC = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [stageCounts, setStageCounts] = useState<Record<string, number>>({});
 
+  const navigate = useNavigate();
   const toast = useToast();
 
   // Feature-based permission check — calls GET /api/features/active
@@ -166,7 +168,8 @@ const TemplateView: React.FC = () => {
             return (
               <div
                 key={wf.id}
-                className={`grid ${gridCols} gap-4 px-6 py-4 border-b border-gray-50 last:border-b-0 hover:bg-orange-50/30 transition-colors items-center`}
+                onClick={() => navigate(`/template/${wf.id}`)}
+                className={`grid ${gridCols} gap-4 px-6 py-4 border-b border-gray-50 last:border-b-0 hover:bg-orange-50/30 transition-colors items-center cursor-pointer`}
               >
                 {/* Name + description */}
                 <div className="flex items-center gap-3 min-w-0">
@@ -205,7 +208,7 @@ const TemplateView: React.FC = () => {
                 <div className="flex justify-center items-center gap-2">
                   {/* "Dùng template" — requires WORKFLOW_UPDATE */}
                   <button
-                    onClick={() => handleUseTemplate(wf)}
+                    onClick={(e) => { e.stopPropagation(); handleUseTemplate(wf); }}
                     disabled={wf.isDefault || !canUpdate}
                     title={!canUpdate ? 'Bạn không có quyền thực hiện thao tác này' : undefined}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
@@ -220,7 +223,7 @@ const TemplateView: React.FC = () => {
                   {/* Delete — requires WORKFLOW_DELETE */}
                   {canDelete && (
                     <button
-                      onClick={() => handleDelete(wf)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(wf); }}
                       disabled={deletingId === wf.id || wf.isDefault}
                       title={wf.isDefault ? 'Không thể xóa workflow đang dùng' : 'Xóa'}
                       className={`p-1.5 rounded-lg transition-all ${

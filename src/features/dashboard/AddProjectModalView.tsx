@@ -47,6 +47,14 @@ const AddProjectModalView: React.FC<AddProjectModalViewProps> = ({
 }) => {
     const [workflows, setWorkflows] = useState<WorkflowOption[]>([]);
     const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(false);
+    const [projectName, setProjectName] = useState('');
+
+    // Preview project code — mirrors BE logic: initials of each word + 6 random digits
+    const previewProjectCode = (name: string): string => {
+        if (!name.trim()) return '—';
+        const initials = name.trim().split(/\s+/).map(w => w[0]?.toUpperCase() ?? '').join('');
+        return `${initials}-XXXXXX`;
+    };
 
     useEffect(() => {
         if (!isOpen) return;
@@ -105,17 +113,21 @@ const AddProjectModalView: React.FC<AddProjectModalViewProps> = ({
                                     <input
                                         type="text"
                                         name="name"
+                                        value={projectName}
+                                        onChange={e => setProjectName(e.target.value)}
                                         className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm text-gray-600 mb-2">Mã Dự Án <span className="text-red-500">*</span></label>
+                                    <label className="block text-sm text-gray-600 mb-2">Mã Dự Án</label>
                                     <input
                                         type="text"
-                                        name="code"
-                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
+                                        value={previewProjectCode(projectName)}
+                                        disabled
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed font-mono text-sm"
                                     />
+                                    <p className="text-xs text-gray-400 mt-1">Tự động tạo từ tên dự án</p>
                                 </div>
                             </div>
                             <div>

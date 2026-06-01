@@ -82,6 +82,18 @@ const AddTaskModalView: React.FC<AddTaskModalViewProps> = ({
     const [description, setDescription] = useState('');
     const [isFormValid, setIsFormValid] = useState(false);
 
+    // Preview task code — mirrors BE logic: first letter of each word uppercased
+    const previewTaskCode = (taskName: string): string => {
+        if (!taskName.trim()) return '—';
+        const initials = taskName.trim().split(/\s+/).map(w => {
+            for (const ch of w) {
+                if (/\p{L}/u.test(ch)) return ch.toUpperCase();
+            }
+            return '';
+        }).join('');
+        return initials || 'TASK';
+    };
+
     useEffect(() => {
         if (isOpen) {
             // Reset form when opened
@@ -110,17 +122,29 @@ const AddTaskModalView: React.FC<AddTaskModalViewProps> = ({
                     <h2 className="text-xl font-bold text-gray-800">Thêm Công Việc</h2>
                 </div>
                 <form onSubmit={onSubmit} className="px-8 py-6 space-y-5">
-                    {/* Row 1: Tên Công Việc */}
-                    <div>
-                        <label className="block text-sm text-gray-600 mb-2">Tên Công Việc: <span className="text-red-500">*</span></label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
-                        />
+                    {/* Row 1: Tên Công Việc + Mã Công Việc */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm text-gray-600 mb-2">Tên Công Việc: <span className="text-red-500">*</span></label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/50 focus:border-[#F79E61] transition-all"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm text-gray-600 mb-2">Mã Công Việc</label>
+                            <input
+                                type="text"
+                                value={previewTaskCode(name)}
+                                disabled
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed font-mono text-sm"
+                            />
+                            <p className="text-xs text-gray-400 mt-1">Tự động tạo từ tên công việc</p>
+                        </div>
                     </div>
                     {/*Nhóm công việc | Dự án */}
                     <div className="grid grid-cols-3 gap-6">

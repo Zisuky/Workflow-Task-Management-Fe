@@ -23,6 +23,12 @@ const userByIdCache = new Map<string, User>();
 let allUsersCache: User[] | null = null;
 let loadingAllPromise: Promise<User[]> | null = null;
 
+// Module-level cache for useCurrentUser hook — declared here so userApi.logout() can reset them
+let currentUserCache: User | null = null;
+let isLoadingCache = false;
+let loadingPromise: Promise<User | null> | null = null;
+let hasInitialized = false;
+
 function mapRawToUser(raw: any, fallbackId = ''): User {
   return {
     id: raw.id || fallbackId,
@@ -194,11 +200,6 @@ export const userApi = {
     loadingAllPromise = null;
   },
 };
-
-let currentUserCache: User | null = null;
-let isLoadingCache = false;
-let loadingPromise: Promise<User | null> | null = null;
-let hasInitialized = false;
 
 export function useCurrentUser() {
   const [currentUser, setCurrentUser] = useState<User | null>(currentUserCache);

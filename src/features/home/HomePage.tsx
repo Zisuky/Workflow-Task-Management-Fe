@@ -50,19 +50,20 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [stats, productivity, priority, taskStatus, alerts, departmentData] = await Promise.all([
+        const [stats, productivity, priority, taskStatus, alerts, departmentData, completedProjects] = await Promise.all([
           dashboardService.getStats(),
           dashboardService.getProductivity(),
           dashboardService.getPriority(),
           dashboardService.getTaskStatus(),
           dashboardService.getAlerts(),
           dashboardService.getTaskCountByGroup(),
+          dashboardService.getCompletedProjectsCount(),
         ]);
 
         const kpis = {
           totalProjects: stats.find(s => s.title === 'Tổng số dự án')?.value as number || 0,
           totalMembers: stats.find(s => s.title === 'Tổng số người tham gia')?.value as number || 0,
-          completedProjects: stats.find(s => s.title === 'Công việc hoàn thành')?.value as number || 0,
+          completedProjects,
           inProgressProjects: stats.find(s => s.title === 'Công việc đang thực hiện')?.value as number || 0,
         };
 

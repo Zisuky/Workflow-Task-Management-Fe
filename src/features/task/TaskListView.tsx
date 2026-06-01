@@ -391,7 +391,7 @@ const TaskListView: React.FC<TaskListViewProps> = ({
                                 <tr
                                     key={task.id || `task-${index}`}
                                     onClick={() => onTaskClick?.(task.id)}
-                                    className="hover:bg-orange-50/50 transition-colors cursor-pointer"
+                                    className="hover:bg-gray-100 transition-colors cursor-pointer even:bg-[#FFF9F5] odd:bg-white"
                                 >
                                     {visibleColumns.map((column, colIndex) => (
                                         <td key={`${task.id || index}-${column.key || colIndex}`} className="px-4 py-3 text-sm">

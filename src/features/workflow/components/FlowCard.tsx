@@ -68,18 +68,25 @@ const FlowCard: React.FC<FlowCardProps> = ({
 
   return (
     <div
-      draggable
-      onDragStart={e => onDragStart(e, task.id)}
+      draggable={!isFinal}
+      onDragStart={e => !isFinal && onDragStart(e, task.id)}
       onClick={handleCardClick}
-      className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 mb-2.5 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all select-none ${
-        isFinal ? 'opacity-50 grayscale' : ''
+      className={`bg-white rounded-xl border shadow-sm p-3 mb-2.5 transition-all select-none ${
+        isFinal
+          ? 'opacity-60 grayscale cursor-default border-gray-100'
+          : 'border-gray-100 cursor-pointer hover:shadow-md hover:-translate-y-0.5'
       }`}
     >
       {/* ── Row 1: task name + priority badge ─────────────────────────────── */}
       <div className="flex items-start justify-between gap-2 mb-1.5">
-        <h4 className="text-sm font-semibold text-gray-800 leading-snug flex-1 min-w-0 truncate">
-          {task.name}
-        </h4>
+        <div className="flex items-center gap-1 flex-1 min-w-0">
+          {task.isPinned && (
+            <span className="text-orange-400 flex-shrink-0 text-sm" title="Đã ghim">📌</span>
+          )}
+          <h4 className="text-sm font-semibold text-gray-800 leading-snug min-w-0 truncate">
+            {task.name}
+          </h4>
+        </div>
         <span
           className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0 whitespace-nowrap"
           style={{ backgroundColor: priority.bg, color: priority.text }}
@@ -128,38 +135,47 @@ const FlowCard: React.FC<FlowCardProps> = ({
           <div />
         )}
 
-        {/* ⋮ menu */}
+        {/* ⋮ menu — hidden when task is in final state */}
         <div className="relative flex-shrink-0" data-no-drill>
-          <button
-            onClick={e => { e.stopPropagation(); setIsMenuOpen(v => !v); }}
-            className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-base leading-none"
-          >
-            ⋮
-          </button>
-          {isMenuOpen && (
-            <div
-              className="absolute right-0 top-7 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[130px] py-1"
-              onMouseLeave={() => setIsMenuOpen(false)}
-            >
+          {!isFinal && (
+            <>
               <button
-                onClick={e => { e.stopPropagation(); onPin?.(task.id); setIsMenuOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                onClick={e => { e.stopPropagation(); setIsMenuOpen(v => !v); }}
+                className="w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-base leading-none"
               >
-                📌 {task.isPinned ? 'Bỏ ghim' : 'Ghim'}
+                ⋮
               </button>
-              <button
-                onClick={e => { e.stopPropagation(); onEdit?.(task.id); setIsMenuOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-              >
-                ✏️ Chỉnh sửa
-              </button>
-              <button
-                onClick={e => { e.stopPropagation(); onDelete?.(task.id); setIsMenuOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
-              >
-                🗑 Xóa
-              </button>
-            </div>
+              {isMenuOpen && (
+                <div
+                  className="absolute right-0 top-7 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[130px] py-1"
+                  onMouseLeave={() => setIsMenuOpen(false)}
+                >
+                  <button
+                    onClick={e => { e.stopPropagation(); onPin?.(task.id); setIsMenuOpen(false); }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    📌 {task.isPinned ? 'Bỏ ghim' : 'Ghim'}
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); onEdit?.(task.id); setIsMenuOpen(false); }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    ✏️ Chỉnh sửa
+                  </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); onDelete?.(task.id); setIsMenuOpen(false); }}
+                    className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    🗑 Xóa
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+          {isFinal && (
+            <span className="text-[10px] font-semibold text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded">
+              ✓ Hoàn thành
+            </span>
           )}
         </div>
       </div>

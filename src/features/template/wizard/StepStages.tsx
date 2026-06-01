@@ -18,10 +18,11 @@ interface Props {
   onRename: (key: string, name: string) => void;
   onRemove: (key: string) => void;
   onReorder: (stages: SelectedStage[]) => void;
+  allowCreate?: boolean;
 }
 
 const StepStages: React.FC<Props> = ({
-  selectedStages, isStatusSelected, onToggle, onAddNew, onRename, onRemove, onReorder,
+  selectedStages, isStatusSelected, onToggle, onAddNew, onRename, onRemove, onReorder, allowCreate = true
 }) => {
   const [available, setAvailable] = useState<TaskStatusItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -108,27 +109,29 @@ const StepStages: React.FC<Props> = ({
           })}
         </div>
 
-        <div className="border-t border-gray-100 p-2">
-          {!showNewForm ? (
-            <button type="button" onClick={() => setShowNewForm(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#F79E61] hover:bg-orange-50 rounded-lg transition-colors font-medium">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              Thêm giai đoạn mới
-            </button>
-          ) : (
-            <div className="flex gap-1.5">
-              <input ref={newInputRef} type="text" value={newName} onChange={e => setNewName(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') submitNew(); if (e.key === 'Escape') { setShowNewForm(false); setNewName(''); } }}
-                placeholder="Tên giai đoạn..."
-                className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/40 focus:border-[#F79E61]" />
-              <button type="button" onClick={submitNew} disabled={!newName.trim()}
-                className="px-3 py-1.5 bg-[#F79E61] text-white text-sm rounded-lg hover:bg-[#e88d50] disabled:opacity-40 disabled:cursor-not-allowed">Thêm</button>
-              <button type="button" onClick={() => { setShowNewForm(false); setNewName(''); }}
-                className="px-2 py-1.5 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50">✕</button>
-            </div>
-          )}
-        </div>
+        {allowCreate && (
+          <div className="border-t border-gray-100 p-2">
+            {!showNewForm ? (
+              <button type="button" onClick={() => setShowNewForm(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#F79E61] hover:bg-orange-50 rounded-lg transition-colors font-medium">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Thêm giai đoạn mới
+              </button>
+            ) : (
+              <div className="flex gap-1.5">
+                <input ref={newInputRef} type="text" value={newName} onChange={e => setNewName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') submitNew(); if (e.key === 'Escape') { setShowNewForm(false); setNewName(''); } }}
+                  placeholder="Tên giai đoạn..."
+                  className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F79E61]/40 focus:border-[#F79E61]" />
+                <button type="button" onClick={submitNew} disabled={!newName.trim()}
+                  className="px-3 py-1.5 bg-[#F79E61] text-white text-sm rounded-lg hover:bg-[#e88d50] disabled:opacity-40 disabled:cursor-not-allowed">Thêm</button>
+                <button type="button" onClick={() => { setShowNewForm(false); setNewName(''); }}
+                  className="px-2 py-1.5 border border-gray-200 text-gray-500 text-sm rounded-lg hover:bg-gray-50">✕</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right panel */}

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import MainLayout from './components/all/MainLayout';
 import AddProjectModal from './components/dashboard/AddProjectModal';
 import AddTaskModal from './features/task/components/AddTaskModal';
-import { DashboardPage, TaskListPage, TaskDetailPage, TimelinePage, HomePage, WorkflowPage, TemplatePage, SettingsPage } from './features';
+import { DashboardPage, TaskListPage, TaskDetailPage, TimelinePage, HomePage, WorkflowPage, TemplatePage, TemplateDetailPage, SettingsPage } from './features';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -236,6 +236,11 @@ const AppContent: React.FC<{
             <Route path="/template" element={
               <FeatureRoute featureCode="WORKFLOW_VIEW">
                 <TemplatePage />
+              </FeatureRoute>
+            } />
+            <Route path="/template/:id" element={
+              <FeatureRoute featureCode="WORKFLOW_VIEW">
+                <TemplateDetailPage />
               </FeatureRoute>
             } />
             <Route path="/settings" element={

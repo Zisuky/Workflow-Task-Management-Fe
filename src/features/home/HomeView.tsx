@@ -76,11 +76,11 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
-                      <span className="text-[#6B7280]">Tổng số task trong dự án</span>
+                      <span className="text-[#6B7280]">Tổng số công việc trong dự án</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-[#111827] rounded-full"></div>
-                      <span className="text-[#6B7280]">Số task đã hoàn thành</span>
+                      <span className="text-[#6B7280]">Số công việc đã hoàn thành</span>
                     </div>
                   </div>
                 </div>
@@ -124,13 +124,13 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Task Priority */}
           <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            <h3 className="text-base font-semibold text-[#111827] mb-4">Số lượng task theo mức độ ưu tiên</h3>
+            <h3 className="text-base font-semibold text-[#111827] mb-4">Số lượng công việc theo mức độ ưu tiên</h3>
             <TaskPriorityList data={data.taskPriority} />
           </div>
 
           {/* Task Status Donut */}
           <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-            <h3 className="text-base font-semibold text-[#111827] mb-4">Tỷ lệ task theo trạng thái</h3>
+            <h3 className="text-base font-semibold text-[#111827] mb-4">Tỷ lệ công việc theo trạng thái</h3>
             <div className="h-56 flex items-center justify-center !border-none !outline-none">
               <TaskStatusDonut data={data.taskStatus} />
             </div>
@@ -139,7 +139,7 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
 
         {/* 4. Department Bar Chart - Full width */}
         <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
-          <h3 className="text-base font-semibold text-[#111827] mb-4">Số lượng task theo phòng ban</h3>
+          <h3 className="text-base font-semibold text-[#111827] mb-4">Số lượng công việc theo phòng ban</h3>
           <div className="h-64 !border-none !outline-none">
             <DepartmentBarChart data={data.departmentTasks} />
           </div>

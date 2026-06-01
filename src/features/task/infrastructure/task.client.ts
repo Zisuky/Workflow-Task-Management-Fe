@@ -1,6 +1,5 @@
 import api from '../../../shared/http/apiClient';
 
-
 export interface TaskResponse {
   id: string;
   projectId: string;

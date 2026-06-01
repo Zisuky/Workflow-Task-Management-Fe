@@ -1,271 +1,233 @@
-import React, { useState } from 'react';
-import type { FlowStep } from '../../../data/workflow.data';
-import { mockRoles } from '../../../data/workflow.data';
+import React, { useState, useEffect } from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { WorkflowStep } from '../domain/workflow.entity';
+import { workflowRepository, saveStepColors } from '../infrastructure/workflow.repository';
 
+// ─── Pastel color options ─────────────────────────────────────────────────────
+const COLOR_OPTIONS = [
+  { hex: '#FEF3C7', label: 'Vàng' },
+  { hex: '#D1FAE5', label: 'Xanh lá' },
+  { hex: '#DBEAFE', label: 'Xanh dương' },
+  { hex: '#FCE7F3', label: 'Hồng' },
+  { hex: '#E0E7FF', label: 'Tím' },
+  { hex: '#FED7AA', label: 'Cam' },
+  { hex: '#F3E8FF', label: 'Tím nhạt' },
+  { hex: '#CCFBF1', label: 'Ngọc' },
+];
+
+// ─── Sortable step row ────────────────────────────────────────────────────────
+interface SortableStepRowProps {
+  step: WorkflowStep;
+  onColorChange: (statusId: string, color: string) => void;
+}
+
+const SortableStepRow: React.FC<SortableStepRowProps> = ({ step, onColorChange }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: step.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg mb-2 shadow-sm"
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing px-1 touch-none"
+        title="Kéo để sắp xếp"
+      >
+        ⠿
+      </button>
+
+      {/* Step name */}
+      <div
+        className="flex-1 px-3 py-1.5 rounded-md text-sm font-medium"
+        style={{ backgroundColor: step.color, color: '#374151' }}
+      >
+        {step.name}
+      </div>
+
+      {/* Color picker */}
+      <div className="flex items-center gap-1">
+        {COLOR_OPTIONS.map(opt => (
+          <button
+            key={opt.hex}
+            title={opt.label}
+            onClick={() => onColorChange(step.statusId, opt.hex)}
+            className={`w-5 h-5 rounded-full border-2 transition-transform hover:scale-110 ${
+              step.color === opt.hex ? 'border-gray-600 scale-110' : 'border-transparent'
+            }`}
+            style={{ backgroundColor: opt.hex }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─── Main config modal ────────────────────────────────────────────────────────
 interface FlowColumnConfigProps {
-    isOpen: boolean;
-    onClose: () => void;
-    steps: FlowStep[];
-    onSave: (steps: FlowStep[]) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  workflowId: string;
+  steps: WorkflowStep[];
+  onSave: (steps: WorkflowStep[]) => void;
 }
 
 const FlowColumnConfig: React.FC<FlowColumnConfigProps> = ({
-    isOpen,
-    onClose,
-    steps,
-    onSave,
+  isOpen,
+  onClose,
+  workflowId,
+  steps,
+  onSave,
 }) => {
-    const [localSteps, setLocalSteps] = useState<FlowStep[]>(steps);
-    const [newStepName, setNewStepName] = useState('');
-    const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
+  const [localSteps, setLocalSteps] = useState<WorkflowStep[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
-    if (!isOpen) return null;
+  useEffect(() => {
+    if (isOpen) {
+      setLocalSteps([...steps].sort((a, b) => a.sortOrder - b.sortOrder));
+    }
+  }, [isOpen, steps]);
 
-    const handleAddStep = () => {
-        if (!newStepName.trim()) return;
-        const newStep: FlowStep = {
-            id: `step-${Date.now()}`,
-            name: newStepName.toUpperCase(),
-            color: '#E5E7EB',
-            order: localSteps.length,
-            allowedRoles: [],
-            requiredFields: [],
-        };
-        setLocalSteps([...localSteps, newStep]);
-        setNewStepName('');
-    };
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
-    const handleDeleteStep = (stepId: string) => {
-        setLocalSteps(localSteps.filter(s => s.id !== stepId));
-    };
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    const handleMoveStep = (index: number, direction: 'up' | 'down') => {
-        const newIndex = direction === 'up' ? index - 1 : index + 1;
-        if (newIndex < 0 || newIndex >= localSteps.length) return;
+    setLocalSteps(prev => {
+      const oldIndex = prev.findIndex(s => s.id === active.id);
+      const newIndex = prev.findIndex(s => s.id === over.id);
+      const reordered = arrayMove(prev, oldIndex, newIndex);
+      return reordered.map((s, i) => ({ ...s, sortOrder: i }));
+    });
+  };
 
-        const newSteps = [...localSteps];
-        [newSteps[index], newSteps[newIndex]] = [newSteps[newIndex], newSteps[index]];
-        newSteps.forEach((step, i) => (step.order = i));
-        setLocalSteps(newSteps);
-    };
-
-    const updateStep = (stepId: string, updates: Partial<FlowStep>) => {
-        setLocalSteps(localSteps.map(s =>
-            s.id === stepId ? { ...s, ...updates } : s
-        ));
-    };
-
-    const toggleRole = (stepId: string, role: string) => {
-        const step = localSteps.find(s => s.id === stepId);
-        if (!step) return;
-
-        const newRoles = step.allowedRoles.includes(role)
-            ? step.allowedRoles.filter(r => r !== role)
-            : [...step.allowedRoles, role];
-
-        updateStep(stepId, { allowedRoles: newRoles });
-    };
-
-    const toggleRequiredField = (stepId: string, field: string) => {
-        const step = localSteps.find(s => s.id === stepId);
-        if (!step) return;
-
-        const newFields = step.requiredFields.includes(field)
-            ? step.requiredFields.filter(f => f !== field)
-            : [...step.requiredFields, field];
-
-        updateStep(stepId, { requiredFields: newFields });
-    };
-
-    const handleSave = () => {
-        onSave(localSteps);
-        onClose();
-    };
-
-    const colorOptions = [
-        '#FEF3C7', '#E0E7FF', '#D1FAE5', '#DBEAFE',
-        '#FCE7F3', '#FEE2E2', '#F3E8FF', '#E5E7EB',
-    ];
-
-    const fieldOptions = [
-        { value: 'title', label: 'Tiêu đề' },
-        { value: 'assignee', label: 'Người thực hiện' },
-        { value: 'priority', label: 'Độ ưu tiên' },
-        { value: 'description', label: 'Mô tả' },
-        { value: 'dueDate', label: 'Ngày hết hạn' },
-        { value: 'tags', label: 'Tags' },
-    ];
-
-    return (
-        <div className="flow-config-overlay">
-            <div className="flow-config-modal">
-                <div className="flow-config-header">
-                    <h2>Cấu hình các bước</h2>
-                    <button onClick={onClose} className="flow-config-close">×</button>
-                </div>
-
-                <div className="flow-config-body">
-                    <div className="flow-config-steps">
-                        {localSteps.map((step, index) => (
-                            <div key={step.id} className="flow-config-step-wrapper">
-                                {/* Step Header / Basic Info */}
-                                <div className="flow-config-step-item">
-                                    <div className="flow-config-step-order">
-                                        <button
-                                            onClick={() => handleMoveStep(index, 'up')}
-                                            disabled={index === 0}
-                                            className="flow-config-arrow"
-                                        >↑</button>
-                                        <button
-                                            onClick={() => handleMoveStep(index, 'down')}
-                                            disabled={index === localSteps.length - 1}
-                                            className="flow-config-arrow"
-                                        >↓</button>
-                                    </div>
-
-                                    <input
-                                        type="text"
-                                        value={step.name}
-                                        onChange={(e) => updateStep(step.id, { name: e.target.value.toUpperCase() })}
-                                        className="flow-config-step-input"
-                                    />
-
-                                    <div className="flow-config-colors">
-                                        {colorOptions.map((color) => (
-                                            <button
-                                                key={color}
-                                                className={`flow-config-color ${step.color === color ? 'selected' : ''}`}
-                                                style={{ backgroundColor: color }}
-                                                onClick={() => updateStep(step.id, { color })}
-                                            />
-                                        ))}
-                                    </div>
-
-                                    <button
-                                        onClick={() => setExpandedStepId(expandedStepId === step.id ? null : step.id)}
-                                        className={`flow-config-expand ${expandedStepId === step.id ? 'active' : ''}`}
-                                        title="Cấu hình nâng cao"
-                                    >
-                                        ⚙️
-                                    </button>
-
-                                    <button
-                                        onClick={() => handleDeleteStep(step.id)}
-                                        className="flow-config-delete"
-                                    >🗑</button>
-                                </div>
-
-                                {/* Advanced Config Panel */}
-                                {expandedStepId === step.id && (
-                                    <div className="flow-config-advanced">
-                                        {/* WIP Limits */}
-                                        <div className="flow-config-group">
-                                            <label>Giới hạn WIP (Min - Max)</label>
-                                            <div className="flow-config-wip-inputs">
-                                                <input
-                                                    type="number"
-                                                    placeholder="Min"
-                                                    value={step.wipMin || ''}
-                                                    onChange={(e) => updateStep(step.id, { wipMin: e.target.value ? Number(e.target.value) : undefined })}
-                                                    className="flow-input-small"
-                                                />
-                                                <span>-</span>
-                                                <input
-                                                    type="number"
-                                                    placeholder="Max"
-                                                    value={step.wipMax || ''}
-                                                    onChange={(e) => updateStep(step.id, { wipMax: e.target.value ? Number(e.target.value) : undefined })}
-                                                    className="flow-input-small"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Allowed Roles */}
-                                        <div className="flow-config-group">
-                                            <label>Roles được phép thả vào</label>
-                                            <div className="flow-config-checkboxes">
-                                                {mockRoles.map(role => (
-                                                    <label key={role} className="flow-checkbox-label">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={step.allowedRoles?.includes(role) || false}
-                                                            onChange={() => toggleRole(step.id, role)}
-                                                        />
-                                                        {role}
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Required Fields */}
-                                        <div className="flow-config-group">
-                                            <label>Trường bắt buộc nhập</label>
-                                            <div className="flow-config-checkboxes">
-                                                {fieldOptions.map(field => (
-                                                    <label key={field.value} className="flow-checkbox-label">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={step.requiredFields?.includes(field.value) || false}
-                                                            onChange={() => toggleRequiredField(step.id, field.value)}
-                                                        />
-                                                        {field.label}
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Danger Zone */}
-                                        <div className="flow-config-group" style={{ marginTop: '16px', borderTop: '1px solid #e5e7eb', paddingTop: '16px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                <button
-                                                    onClick={() => handleDeleteStep(step.id)}
-                                                    style={{
-                                                        padding: '8px 16px',
-                                                        backgroundColor: '#fee2e2',
-                                                        color: '#dc2626',
-                                                        border: '1px solid #fecaca',
-                                                        borderRadius: '6px',
-                                                        fontWeight: 600,
-                                                        cursor: 'pointer',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '6px',
-                                                        fontSize: '13px'
-                                                    }}
-                                                >
-                                                    <span>🗑</span> Xóa cột này
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Add New Step */}
-                    <div className="flow-config-add">
-                        <input
-                            type="text"
-                            value={newStepName}
-                            onChange={(e) => setNewStepName(e.target.value)}
-                            placeholder="Tên bước mới..."
-                            className="flow-config-add-input"
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddStep()}
-                        />
-                        <button onClick={handleAddStep} className="flow-config-add-btn">
-                            + Thêm bước
-                        </button>
-                    </div>
-                </div>
-
-                <div className="flow-config-footer">
-                    <button onClick={onClose} className="flow-config-cancel">Hủy</button>
-                    <button onClick={handleSave} className="flow-config-save">Lưu thay đổi</button>
-                </div>
-            </div>
-        </div>
+  const handleColorChange = (statusId: string, color: string) => {
+    setLocalSteps(prev =>
+      prev.map(s => (s.statusId === statusId ? { ...s, color } : s))
     );
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      // Persist colors to localStorage
+      const colorConfig: Record<string, string> = {};
+      localSteps.forEach(s => { colorConfig[s.statusId] = s.color; });
+      saveStepColors(workflowId, colorConfig);
+
+      // Persist sort order to BE (fire-and-forget per step)
+      await Promise.allSettled(
+        localSteps.map(s =>
+          workflowRepository.updateStepSortOrder(workflowId, s.id, s.sortOrder)
+        )
+      );
+
+      onSave(localSteps);
+      onClose();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[80vh] flex flex-col">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-gray-800">⚙️ Cấu hình Workflow</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <p className="text-sm text-gray-500 mb-4">
+            Kéo thả để sắp xếp thứ tự cột. Chọn màu pastel cho từng bước.
+          </p>
+
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={localSteps.map(s => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {localSteps.map(step => (
+                <SortableStepRow
+                  key={step.id}
+                  step={step}
+                  onColorChange={handleColorChange}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+
+          {localSteps.length === 0 && (
+            <div className="text-center text-gray-400 py-8">
+              Không có bước nào trong workflow này
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 text-sm"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="px-4 py-2 bg-gradient-to-r from-[#F79E61] to-[#f0884a] text-white rounded-lg text-sm font-medium hover:from-[#e88d50] hover:to-[#e07d3a] disabled:opacity-50"
+          >
+            {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default FlowColumnConfig;

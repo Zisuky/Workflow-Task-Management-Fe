@@ -1,2 +1,2 @@
-export type { Job as Task, CreateJobInput as CreateTaskInput } from '../../../shared/types/task';
-export type { JobGroup, JobPriority, JobStatus, JobType } from '../../../shared/types';
+export type { Task as Task, CreateTaskInput as CreateTaskInput } from '../../../shared/types/task';
+export type { TaskGroup, TaskPriority, TaskStatus, TaskType } from '../../../shared/types';

@@ -5,6 +5,7 @@ import type { Project } from '../../shared/types/project';
 import DashboardView from './DashboardView';
 import ProjectDetailModal from '../../components/dashboard/ProjectDetailModal';
 import { useProjectStore } from '../project/application/project.store';
+import type { ProjectState } from '../project/application/project.store';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -14,12 +15,12 @@ const DashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
-    const searchTerm = useProjectStore(state => state.searchTerm);
-    const selectedProject = useProjectStore(state => state.selectedProject);
-    const isDetailModalOpen = useProjectStore(state => state.isDetailModalOpen);
-    const setSearchTerm = useProjectStore(state => state.setSearchTerm);
-    const selectProject = useProjectStore(state => state.selectProject);
-    const setDetailModalOpen = useProjectStore(state => state.setDetailModalOpen);
+    const searchTerm = useProjectStore((state: ProjectState) => state.searchTerm);
+    const selectedProject = useProjectStore((state: ProjectState) => state.selectedProject);
+    const isDetailModalOpen = useProjectStore((state: ProjectState) => state.isDetailModalOpen);
+    const setSearchTerm = useProjectStore((state: ProjectState) => state.setSearchTerm);
+    const selectProject = useProjectStore((state: ProjectState) => state.selectProject);
+    const setDetailModalOpen = useProjectStore((state: ProjectState) => state.setDetailModalOpen);
 
     const loadProjects = useCallback(async () => {
         setIsLoading(true);
@@ -59,15 +60,30 @@ const DashboardPage: React.FC = () => {
         setDisplayCount(ITEMS_PER_PAGE);
     }, [searchTerm]);
 
-    const handleTogglePin = (id: string) => {
+    const handleTogglePin = async (id: string) => {
+        const project = projects.find(p => p.id === id);
+        if (!project) return;
+        // Optimistic update
         setProjects(prevProjects =>
             prevProjects.map(p => (p.id === id ? { ...p, isPinned: !p.isPinned } : p))
         );
-        projectService.togglePin(id);
+        try {
+            if (project.isPinned) {
+                await projectService.unpinProject(id);
+            } else {
+                await projectService.pinProject(id);
+            }
+        } catch (err) {
+            console.error('[Pin/Unpin project] Thao tác thất bại:', err);
+            // Revert on failure
+            setProjects(prevProjects =>
+                prevProjects.map(p => (p.id === id ? { ...p, isPinned: project.isPinned } : p))
+            );
+        }
     };
 
     const handleProjectClick = (project: Project) => {
-        navigate('/job', { state: { projectId: project.id } });
+        navigate('/task', { state: { projectId: project.id } });
     };
 
     const handleViewDetail = (project: Project) => {

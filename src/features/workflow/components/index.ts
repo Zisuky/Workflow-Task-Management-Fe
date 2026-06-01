@@ -3,3 +3,5 @@ export { default as FlowCard } from './FlowCard';
 export { default as FlowColumn } from './FlowColumn';
 export { default as FlowColumnConfig } from './FlowColumnConfig';
 export { default as BoardMinimap } from './BoardMinimap';
+export { default as TaskDetailPanel } from './TaskDetailPanel';
+export { default as SubtaskBoard } from './SubtaskBoard';

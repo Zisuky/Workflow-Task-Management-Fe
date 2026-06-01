@@ -1,10 +1,10 @@
 interface HeaderProps {
     title?: string;
     onBack?: () => void;
-    onAddJob?: () => void;
+    onAddTask?: () => void;
     onAddProject?: () => void;
     onTimeline?: () => void;
-    isJobPage?: boolean;
+    isTaskPage?: boolean;
     showBackButton?: boolean;
     isChartPage?: boolean;
     isHomePage?: boolean;
@@ -14,14 +14,17 @@ interface HeaderProps {
     isTemplatePage?: boolean;
     onAddTemplate?: () => void;
     isTemplateWizardActive?: boolean;
+    canAddTask?: boolean;
+    canAddProject?: boolean;
 }
+
 const Header: React.FC<HeaderProps> = ({
     title = 'Trang chủ',
     onBack,
-    onAddJob,
+    onAddTask,
     onAddProject,
     onTimeline,
-    isJobPage = false,
+    isTaskPage = false,
     showBackButton = false,
     isChartPage = false,
     isHomePage = false,
@@ -30,16 +33,17 @@ const Header: React.FC<HeaderProps> = ({
     currentTimeFilter = 'all',
     isTemplatePage = false,
     onAddTemplate,
-    isTemplateWizardActive = false
+    isTemplateWizardActive = false,
 }) => {
     const handleButtonClick = () => {
-        if (isJobPage) {
-            onAddJob?.();
+        if (isTaskPage) {
+            onAddTask?.();
         } else {
             onAddProject?.();
         }
     };
-    const buttonText = isJobPage ? 'Thêm Công việc' : 'Thêm Dự Án';
+    const buttonText = isTaskPage ? 'Thêm Công Việc' : 'Thêm Dự Án';
+
     return (
         <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-40">
             <div className="flex items-center gap-3">
@@ -78,6 +82,7 @@ const Header: React.FC<HeaderProps> = ({
                     </div>
                 )}
             </div>
+
             {!showBackButton && (
                 <div id="header-right-actions" className="flex items-center gap-3">
                     {(isChartPage || isHomePage) ? (
@@ -102,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({
                         </div>
                     ) : (
                         <>
-                            {isJobPage && (
+                            {isTaskPage && (
                                 <button
                                     onClick={onTimeline}
                                     className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
@@ -114,8 +119,13 @@ const Header: React.FC<HeaderProps> = ({
                                 </button>
                             )}
                             {!isHomePage && !isWorkflowPage && !isTemplatePage && (
-                                <button onClick={handleButtonClick} className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                <button
+                                    onClick={handleButtonClick}
+                                    className="flex items-center gap-2 bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
                                     <span>{buttonText}</span>
                                 </button>
                             )}
@@ -124,7 +134,9 @@ const Header: React.FC<HeaderProps> = ({
                                     onClick={onAddTemplate}
                                     className="flex items-center gap-2 bg-[#6366F1] hover:bg-[#4F46E5] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
                                     <span>Thêm Template</span>
                                 </button>
                             )}
@@ -135,4 +147,5 @@ const Header: React.FC<HeaderProps> = ({
         </header>
     );
 };
+
 export default Header;

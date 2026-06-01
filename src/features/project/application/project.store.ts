@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Project } from '../domain/project.entity';
 
-interface ProjectState {
+export interface ProjectState {
   searchTerm: string;
   selectedProject: Project | null;
   isDetailModalOpen: boolean;

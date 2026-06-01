@@ -6,7 +6,7 @@ interface LoginPageProps {
     onLoginSuccess?: (user: User) => void;
 }
 const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
-    const [credentials, setCredentials] = useState<LoginCredentials>({ email: '', password: '', rememberMe: false });
+    const [credentials, setCredentials] = useState<LoginCredentials>({ email: '', account: '', password: '', rememberMe: false });
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

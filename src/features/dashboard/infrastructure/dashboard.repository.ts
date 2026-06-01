@@ -1,5 +1,5 @@
 import type { StatCard } from '../../../shared/types/dashboard';
-import { dashboardApi, type KpiStatDTO, type ProductivityDTO, type PriorityDTO, type TaskStatusDTO, type WarningDTO, type TaskCountByTypeDTO } from './dashboard.client';
+import { dashboardApi, type KpiStatDTO, type ProductivityDTO, type PriorityDTO, type TaskStatusDTO, type WarningDTO, type TaskCountByGroupDTO } from './dashboard.client';
 import { mockStats } from '../../../data/dashboard.data';
 
 const mapToStatCard = (dto: KpiStatDTO, index: number): StatCard => {
@@ -23,7 +23,7 @@ export interface PriorityData { priority: string; count: number; }
 export interface TaskStatusData { status: string; count: number; }
 export interface AlertData { id: string; taskCode: string; message: string; projectCode: string; taskId?: string; }
 export interface WarningData { taskId: string; taskName: string; projectName: string; warningType: 'OVERDUE' | 'DUE_SOON'; dueDate: string; daysOverdue: number; daysRemaining: number; }
-export interface DepartmentTaskData { typeId: string; typeName: string; count: number; }
+export interface DepartmentTaskData { taskGroupId: string; typeName: string; count: number; }
 
 export const dashboardRepository = {
   async getStats(): Promise<StatCard[]> {
@@ -88,12 +88,27 @@ export const dashboardRepository = {
       return [];
     }
   },
-  async getTaskCountByType(): Promise<DepartmentTaskData[]> {
+  async getTaskCountByGroup(): Promise<DepartmentTaskData[]> {
     try {
-      const response = await dashboardApi.getTaskCountByType();
-      return response.data.map((dto: TaskCountByTypeDTO) => ({ typeId: dto.typeId, typeName: dto.typeName, count: dto.count }));
+      const response = await dashboardApi.getTaskCountByGroup();
+      return response.data.map((dto: TaskCountByGroupDTO) => ({
+        taskGroupId: dto.taskGroupId,
+        typeName: dto.groupName,
+        count: dto.count,
+      }));
     } catch {
       return [];
+    }
+  },
+
+  async getCompletedProjectsCount(): Promise<number> {
+    try {
+      const { projectApi } = await import('../../task/infrastructure/project.client');
+      const response = await projectApi.getAll(0, 1000);
+      const list: Array<{ status: string }> = response.data?.content ?? response.data ?? [];
+      return list.filter(p => p.status === 'COMPLETED').length;
+    } catch {
+      return 0;
     }
   },
 };

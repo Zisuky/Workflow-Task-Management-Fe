@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Member } from '../../data/members.data';
 import { userApi } from '../../features/user/infrastructure/user.api';
 import { MemberSelectView } from '../../features/dashboard';
@@ -56,8 +56,9 @@ const MemberSelect: React.FC<MemberSelectProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const filteredMembers = searchResults.filter(member =>
-        !selectedMembers.some(s => s.id === member.id)
+    const safeSelectedMembers = Array.isArray(selectedMembers) ? selectedMembers : [];
+    const filteredMembers = (searchResults || []).filter(member =>
+        member && !safeSelectedMembers.some(s => s && s.id === member.id)
     );
 
     const handleSelect = (member: Member) => {

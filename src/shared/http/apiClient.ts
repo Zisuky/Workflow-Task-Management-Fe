@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Dùng path tương đối để Vite proxy forward đến BE (tránh CORS)
 const apiClient = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   headers: {
     "Content-Type": "application/json",
   },

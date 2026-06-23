@@ -31,6 +31,9 @@ export const projectRepository = {
           isPinned: boolean;
           workflowId: string | null;
           createdAt: string;
+          statusId?: string | null;
+          statusCode?: string | null;
+          statusName?: string | null;
         }) => {
           try {
             const [membersResponse, detailResponse] = await Promise.all([
@@ -39,7 +42,6 @@ export const projectRepository = {
             ]);
             const members = membersResponse.data ?? [];
             const detail = detailResponse.data;
-            // pmcc.project_member has no role/leader column — first member treated as manager
             const managerMember = members.length > 0 ? members[0] : null;
             return {
               id: p.id,
@@ -54,6 +56,9 @@ export const projectRepository = {
               workflowId: p.workflowId,
               startDate: detail?.startDate ?? null,
               endDate: detail?.endDate ?? null,
+              statusId: p.statusId ?? null,
+              statusCode: p.statusCode ?? null,
+              statusName: p.statusName ?? null,
             } satisfies Project;
           } catch {
             return {
@@ -67,6 +72,9 @@ export const projectRepository = {
               workflowId: p.workflowId,
               startDate: null,
               endDate: null,
+              statusId: null,
+              statusCode: null,
+              statusName: null,
             } satisfies Project;
           }
         })

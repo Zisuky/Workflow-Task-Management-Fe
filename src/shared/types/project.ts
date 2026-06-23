@@ -10,6 +10,9 @@ export interface Project {
   workflowId?: string | null;
   startDate?: string | null; // from project_detail.start_date
   endDate?: string | null;   // from project_detail.end_date
+  statusId?: string | null;      // project_status.id
+  statusCode?: string | null;    // "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED"
+  statusName?: string | null;    // "Đang thực hiện" | ...
 }
 
 // Maps to BE CreateProjectRequest DTO

@@ -24,9 +24,21 @@ const priorityColors: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  'NOT_STARTED': '#d1c5ebff',
-  'IN_PROGRESS': '#f9420fff',
+  'TO_DO': '#3B82F6',
+  'NOT_STARTED': '#3B82F6',
+  'IN_PROGRESS': '#F97316',
+  'PAUSED': '#EAB308',
+  'DONE': '#22C55E',
   'COMPLETED': '#22C55E',
+};
+
+const statusTranslations: Record<string, string> = {
+  'TO_DO': 'Chưa bắt đầu',
+  'NOT_STARTED': 'Chưa bắt đầu',
+  'IN_PROGRESS': 'Đang thực hiện',
+  'PAUSED': 'Tạm dừng',
+  'DONE': 'Hoàn thành',
+  'COMPLETED': 'Hoàn thành',
 };
 
 const emptyData: HomeData = {
@@ -43,7 +55,11 @@ const emptyData: HomeData = {
   alerts: [],
 };
 
-const HomePage: React.FC = () => {
+interface HomePageProps {
+  currentTimeFilter?: string;
+}
+
+const HomePage: React.FC<HomePageProps> = ({ currentTimeFilter = 'day' }) => {
   const [data, setData] = useState<HomeData>(emptyData);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -51,12 +67,12 @@ const HomePage: React.FC = () => {
     const fetchData = async () => {
       try {
         const [stats, productivity, priority, taskStatus, alerts, departmentData, completedProjects] = await Promise.all([
-          dashboardService.getStats(),
-          dashboardService.getProductivity(),
-          dashboardService.getPriority(),
-          dashboardService.getTaskStatus(),
-          dashboardService.getAlerts(),
-          dashboardService.getTaskCountByGroup(),
+          dashboardService.getStats(currentTimeFilter),
+          dashboardService.getProductivity(currentTimeFilter),
+          dashboardService.getPriority(currentTimeFilter),
+          dashboardService.getTaskStatus(currentTimeFilter),
+          dashboardService.getAlerts(currentTimeFilter),
+          dashboardService.getTaskCountByGroup(currentTimeFilter),
           dashboardService.getCompletedProjectsCount(),
         ]);
 
@@ -81,7 +97,7 @@ const HomePage: React.FC = () => {
 
         const totalStatusCount = taskStatus.reduce((sum, s) => sum + s.count, 0);
         const mappedTaskStatus = taskStatus.map(s => ({
-          status: s.status,
+          status: statusTranslations[s.status] || s.status,
           count: s.count,
           color: statusColors[s.status] || '#9CA3AF',
           percentage: totalStatusCount > 0 ? Math.round((s.count / totalStatusCount) * 100 * 10) / 10 : 0,
@@ -109,7 +125,7 @@ const HomePage: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [currentTimeFilter]);
 
   return (
     <HomeView

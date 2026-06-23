@@ -26,10 +26,10 @@ export interface WarningDTO {
 export interface TaskCountByGroupDTO { taskGroupId: string; groupName: string; count: number; }
 
 export const dashboardApi = {
-  getStats() { return api.get('/dashboard/stats'); },
-  getProductivity() { return api.get('/dashboard/productivity'); },
-  getPriority() { return api.get('/dashboard/priority'); },
-  getTaskStatus() { return api.get('/dashboard/task-status'); },
-  getWarnings() { return api.get('/dashboard/warnings'); },
-  getTaskCountByGroup() { return api.get('/dashboard/task-count-by-group'); },
+  getStats(filter = 'all') { return api.get(`/dashboard/stats?filter=${filter}`); },
+  getProductivity(filter = 'all') { return api.get(`/dashboard/productivity?filter=${filter}`); },
+  getPriority(filter = 'all') { return api.get(`/dashboard/priority?filter=${filter}`); },
+  getTaskStatus(filter = 'all') { return api.get(`/dashboard/task-status?filter=${filter}`); },
+  getWarnings(filter = 'all') { return api.get(`/dashboard/warnings?filter=${filter}`); },
+  getTaskCountByGroup(filter = 'all') { return api.get(`/dashboard/task-count-by-group?filter=${filter}`); },
 };

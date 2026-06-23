@@ -14,6 +14,7 @@ export const PROJECT_STATUS_COLORS: Record<string, string> = {
   COMPLETED:   '#10B981',
   ON_HOLD:     '#F59E0B',
   CANCELLED:   '#EF4444',
+  PAUSED:      '#9CA3AF',
 };
 
 export const projectStatusApi = {

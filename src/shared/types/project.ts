@@ -13,6 +13,8 @@ export interface Project {
   statusId?: string | null;      // project_status.id
   statusCode?: string | null;    // "IN_PROGRESS" | "COMPLETED" | "ON_HOLD" | "CANCELLED"
   statusName?: string | null;    // "Đang thực hiện" | ...
+  leaderId?: string | null;
+  memberIds?: string[];
 }
 
 // Maps to BE CreateProjectRequest DTO

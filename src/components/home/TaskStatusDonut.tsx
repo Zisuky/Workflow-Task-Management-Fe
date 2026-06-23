@@ -1,5 +1,5 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface TaskStatusData {
   status: string;
@@ -16,14 +16,16 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-        <p className="text-sm font-semibold text-[#111827] mb-1">{data.name}</p>
-        <div className="space-y-1">
-          <div className="text-sm text-[#6B7280]">
-            Số lượng: <span className="font-medium" style={{ color: data.color }}>{data.count}</span>
+      <div className="bg-white p-3 rounded-lg shadow-md border border-gray-100">
+        <p className="text-sm font-semibold text-gray-900 mb-1">{data.name}</p>
+        <div className="space-y-1 text-xs">
+          <div className="flex justify-between gap-4 text-gray-500">
+            <span>Số lượng:</span>
+            <span className="font-semibold text-gray-800">{data.count}</span>
           </div>
-          <div className="text-sm text-[#6B7280]">
-            Tỷ lệ: <span className="font-medium" style={{ color: data.color }}>{data.percentage}%</span>
+          <div className="flex justify-between gap-4 text-gray-500">
+            <span>Tỷ lệ:</span>
+            <span className="font-semibold text-gray-800">{data.percentage}%</span>
           </div>
         </div>
       </div>
@@ -34,10 +36,11 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const TaskStatusDonut: React.FC<TaskStatusDonutProps> = ({ data }) => {
   // Handle empty data case
-  if (!data || data.length === 0) {
+  if (!data || data.length === 0 || data.every(item => item.count === 0)) {
     return (
-      <div className="flex items-center justify-center h-full text-sm text-gray-400">
-        Không có dữ liệu
+      <div className="flex flex-col items-center justify-center h-full min-h-[180px] text-sm text-gray-400">
+        <span className="text-2xl mb-1">📊</span>
+        <span>Không có dữ liệu công việc</span>
       </div>
     );
   }
@@ -50,56 +53,42 @@ const TaskStatusDonut: React.FC<TaskStatusDonutProps> = ({ data }) => {
     percentage: item.percentage
   }));
 
-  const renderCustomLabel = (entry: any) => {
-    return `${entry.percentage}%`;
-  };
-
   return (
-    <div className="w-full h-full flex flex-col">
-      {/* Donut Chart */}
-      <div className="flex-1 flex items-center justify-center">
-        <ResponsiveContainer width="100%" height={180}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={45}
-              outerRadius={70}
-              paddingAngle={2}
-              dataKey="value"
-              label={renderCustomLabel}
-              labelLine={false}
+    <div className="w-full h-full flex flex-col justify-end">
+      <div className="flex-1 min-h-[180px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 15, right: 10, left: -20, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 11, fill: '#6B7280', fontWeight: 500 }}
+            />
+            <YAxis
+              allowDecimals={false}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 11, fill: '#9CA3AF' }}
+            />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: 'rgba(243, 244, 246, 0.6)' }}
+              wrapperStyle={{ outline: 'none', zIndex: 50 }}
+            />
+            <Bar
+              dataKey="count"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={32}
               isAnimationActive
-              animationDuration={600}
+              animationDuration={800}
             >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
-            </Pie>
-            <Tooltip 
-              content={<CustomTooltip />}
-              wrapperStyle={{ 
-                outline: 'none',
-                zIndex: 50,
-                pointerEvents: 'none'
-              }}
-            />
-          </PieChart>
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
-      </div>
-
-      {/* Custom Legend */}
-      <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm mt-2">
-        {data.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-[#6B7280]">{item.status}</span>
-          </div>
-        ))}
       </div>
     </div>
   );

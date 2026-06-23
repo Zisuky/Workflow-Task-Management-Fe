@@ -45,7 +45,7 @@ export const projectApi = {
   getByUser(userId: string) { return api.get(`/projects/user/${userId}`); },
   create(request: CreateProjectRequest) { return api.post('/projects', request); },
   getMembers(projectId: string) { return api.get(`/projects/${projectId}/members`); },
-  update(id: string, project: Partial<Pick<ProjectResponse, 'name' | 'description'>>) { return api.put(`/projects/${id}`, project); },
+  update(id: string, project: Partial<Pick<ProjectResponse, 'name' | 'description'> & { leaderId?: string | null; memberIds?: string[] }>) { return api.put(`/projects/${id}`, project); },
   delete(id: string) { return api.delete(`/projects/${id}`); },
   pin(id: string) { return api.patch(`/projects/${id}/pinned`); },
   unpin(id: string) { return api.patch(`/projects/${id}/unpinned`); },

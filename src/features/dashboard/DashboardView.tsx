@@ -96,13 +96,19 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                 </div>
                 <div className="divide-y divide-gray-100 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-gray-50 hover:scrollbar-thumb-orange-300">
-                    {projects.map((project, index) => (
-                        <div
-                            key={project.id}
-                            onClick={() => onProjectClick?.(project)}
-                            className="grid grid-cols-12 gap-4 px-6 py-4 text-sm hover:bg-gray-100 transition-colors duration-200 cursor-pointer group animate-slideUp even:bg-[#FFF9F5] odd:bg-white"
-                            style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
-                        >
+                    {projects.map((project, index) => {
+                        const isPaused = project.statusCode === 'PAUSED';
+                        return (
+                            <div
+                                key={project.id}
+                                onClick={() => onProjectClick?.(project)}
+                                className={`grid grid-cols-12 gap-4 px-6 py-4 text-sm transition-colors duration-200 cursor-pointer group animate-slideUp ${
+                                    isPaused
+                                        ? 'bg-gray-100/60 hover:bg-gray-200/50 text-gray-500'
+                                        : 'even:bg-[#FFF9F5] odd:bg-white hover:bg-gray-100'
+                                }`}
+                                style={{ animationDelay: `${Math.min(index, 10) * 50}ms` }}
+                            >
                             <div className="col-span-1 flex justify-center">
                                 <button
                                     type="button"
@@ -129,7 +135,8 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                                 </button>
                             </div>
                         </div>
-                    ))}
+                    );
+                })}
                 </div>
                 {/* Infinite scroll trigger */}
                 <div ref={loadMoreTriggerRef} className="h-1" />

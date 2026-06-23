@@ -114,6 +114,7 @@ const DashboardPage: React.FC = () => {
                 isOpen={isDetailModalOpen}
                 project={selectedProject}
                 onClose={handleCloseDetailModal}
+                onRefresh={loadProjects}
             />
         </>
     );

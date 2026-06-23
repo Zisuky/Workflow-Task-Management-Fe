@@ -59,6 +59,8 @@ export const projectRepository = {
               statusId: p.statusId ?? null,
               statusCode: p.statusCode ?? null,
               statusName: p.statusName ?? null,
+              leaderId: managerMember ? managerMember.userId : null,
+              memberIds: members.map((m: { userId: string }) => m.userId),
             } satisfies Project;
           } catch {
             return {
@@ -116,19 +118,26 @@ export const projectRepository = {
       const response = await projectApi.update(id, {
         name: updates.name,
         description: updates.description,
+        leaderId: updates.leaderId,
+        memberIds: updates.memberIds,
       });
       const p = response.data;
       return {
         id: p.id,
-        code: p.projectCode,
+        code: p.projectCode ?? p.code,
         name: p.name,
-        manager: 'Đang tải...',
-        assignee: 'Đang tải...',
+        manager: updates.manager || 'Chưa có',
+        assignee: updates.assignee || 'Chưa có',
         isPinned: p.isPinned ?? false,
         description: p.description || '',
         workflowId: p.workflowId,
         startDate: updates.startDate ?? null,
         endDate: updates.endDate ?? null,
+        statusId: p.statusId ?? updates.statusId ?? null,
+        statusCode: p.statusCode ?? updates.statusCode ?? null,
+        statusName: p.statusName ?? updates.statusName ?? null,
+        leaderId: updates.leaderId ?? null,
+        memberIds: updates.memberIds ?? [],
       };
     } catch {
       return null;

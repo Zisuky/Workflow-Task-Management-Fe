@@ -26,41 +26,41 @@ export interface WarningData { taskId: string; taskName: string; projectName: st
 export interface DepartmentTaskData { taskGroupId: string; typeName: string; count: number; }
 
 export const dashboardRepository = {
-  async getStats(): Promise<StatCard[]> {
+  async getStats(filter = 'all'): Promise<StatCard[]> {
     try {
-      const response = await dashboardApi.getStats();
+      const response = await dashboardApi.getStats(filter);
       return response.data.map(mapToStatCard);
     } catch {
       return mockStats;
     }
   },
-  async getProductivity(): Promise<ProductivityData[]> {
+  async getProductivity(filter = 'all'): Promise<ProductivityData[]> {
     try {
-      const response = await dashboardApi.getProductivity();
+      const response = await dashboardApi.getProductivity(filter);
       return response.data.map((dto: ProductivityDTO) => ({ month: dto.project, completed: dto.completedTasks, total: dto.totalTasks }));
     } catch {
       return [];
     }
   },
-  async getPriority(): Promise<PriorityData[]> {
+  async getPriority(filter = 'all'): Promise<PriorityData[]> {
     try {
-      const response = await dashboardApi.getPriority();
+      const response = await dashboardApi.getPriority(filter);
       return response.data.map((dto: PriorityDTO) => ({ priority: dto.priority, count: dto.count }));
     } catch {
       return [];
     }
   },
-  async getTaskStatus(): Promise<TaskStatusData[]> {
+  async getTaskStatus(filter = 'all'): Promise<TaskStatusData[]> {
     try {
-      const response = await dashboardApi.getTaskStatus();
+      const response = await dashboardApi.getTaskStatus(filter);
       return response.data.map((dto: TaskStatusDTO) => ({ status: dto.status, count: dto.count }));
     } catch {
       return [];
     }
   },
-  async getAlerts(): Promise<AlertData[]> {
+  async getAlerts(filter = 'all'): Promise<AlertData[]> {
     try {
-      const response = await dashboardApi.getWarnings();
+      const response = await dashboardApi.getWarnings(filter);
       return response.data.map((dto: WarningDTO) => ({
         id: dto.taskId,
         taskCode: dto.taskName,
@@ -72,9 +72,9 @@ export const dashboardRepository = {
       return [];
     }
   },
-  async getWarnings(): Promise<WarningData[]> {
+  async getWarnings(filter = 'all'): Promise<WarningData[]> {
     try {
-      const response = await dashboardApi.getWarnings();
+      const response = await dashboardApi.getWarnings(filter);
       return response.data.map((dto: WarningDTO) => ({
         taskId: dto.taskId,
         taskName: dto.taskName,
@@ -88,9 +88,9 @@ export const dashboardRepository = {
       return [];
     }
   },
-  async getTaskCountByGroup(): Promise<DepartmentTaskData[]> {
+  async getTaskCountByGroup(filter = 'all'): Promise<DepartmentTaskData[]> {
     try {
-      const response = await dashboardApi.getTaskCountByGroup();
+      const response = await dashboardApi.getTaskCountByGroup(filter);
       return response.data.map((dto: TaskCountByGroupDTO) => ({
         taskGroupId: dto.taskGroupId,
         typeName: dto.groupName,

@@ -88,10 +88,9 @@ const Header: React.FC<HeaderProps> = ({
                     {(isChartPage || isHomePage) ? (
                         <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                             {[
-                                { key: 'day', label: 'Day' },
-                                { key: 'week', label: 'Week' },
-                                { key: 'month', label: 'Month' },
-                                { key: 'year', label: 'Year' }
+                                { key: 'day', label: 'Ngày' },
+                                { key: 'month', label: 'Tháng' },
+                                { key: 'year', label: 'Năm' }
                             ].map((filter) => (
                                 <button
                                     key={filter.key}

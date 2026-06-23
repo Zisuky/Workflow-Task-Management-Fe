@@ -157,7 +157,7 @@ const AppContent: React.FC<{
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [currentTimeFilter, setCurrentTimeFilter] = useState('all');
+    const [currentTimeFilter, setCurrentTimeFilter] = useState('day');
 
     const currentProjectId = location.state?.projectId as string | undefined;
 
@@ -202,7 +202,7 @@ const AppContent: React.FC<{
           currentTimeFilter={currentTimeFilter}
         >
           <Routes>
-            <Route path="/home" element={<HomePage />} />
+            <Route path="/home" element={<HomePage currentTimeFilter={currentTimeFilter} />} />
             <Route path="/project" element={
               <FeatureRoute featureCode="PROJECT_VIEW">
                 <DashboardPage key={refreshKey} />

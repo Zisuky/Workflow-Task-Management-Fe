@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { userApi, useCurrentUser } from '../user/infrastructure/user.api';
 import { useFeatures } from '../../shared/hooks/useFeatures';
 import type { User } from '../../shared/types';
@@ -1077,8 +1077,18 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
 const SettingsPage: React.FC = () => {
   const { currentUser, refetch: refetchCurrentUser } = useCurrentUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const { can, isLoading: isFeaturesLoading } = useFeatures();
   const [activeTab, setActiveTab] = useState<ActiveTab>('members');
+
+  const handleTabChange = (key: ActiveTab) => {
+    setActiveTab(key);
+    if (key === 'members') {
+      navigate('/settings', { replace: true });
+    } else {
+      navigate(`/settings?tab=${key}`, { replace: true });
+    }
+  };
 
   const tabs = [
     {
@@ -1110,9 +1120,9 @@ const SettingsPage: React.FC = () => {
   // Check URL query parameters to set active tab
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    if (tab === 'profile' && tabs.some(t => t.key === 'profile')) {
-      setActiveTab('profile');
+    const tab = params.get('tab') as ActiveTab | null;
+    if (tab && tabs.some(t => t.key === tab)) {
+      setActiveTab(tab);
     } else if (tabs.length > 0 && !tabs.some(t => t.key === activeTab)) {
       setActiveTab(tabs[0].key);
     }
@@ -1248,7 +1258,7 @@ const SettingsPage: React.FC = () => {
         {/* Tab nav */}
         <div className="flex gap-1 bg-white border border-gray-100 rounded-xl p-1 w-fit shadow-sm">
           {tabs.map(tab => (
-            <button key={tab.key} onClick={()=>setActiveTab(tab.key)}
+            <button key={tab.key} onClick={()=>handleTabChange(tab.key)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab===tab.key ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}>

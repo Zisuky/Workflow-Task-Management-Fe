@@ -31,7 +31,7 @@ const FeatureRoute: React.FC<{ featureCode: string; children: React.ReactNode }>
 const SettingsRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { can, isLoading } = useFeatures();
   if (isLoading) return null;
-  const hasAccess = can('SETTING_VIEW') || can('PROFILE_VIEW');
+  const hasAccess = can('SETTING_VIEW') || can('MEMBER_VIEW') || can('ROLE_VIEW') || can('TASKGROUP_VIEW');
   return hasAccess ? <>{children}</> : <Navigate to="/home" replace />;
 };
 

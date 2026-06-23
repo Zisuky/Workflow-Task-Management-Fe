@@ -13,22 +13,16 @@ interface TaskStatusAnalyticsProps {
 
 const STATUS_META: Record<string, { label: string; icon: string; bgLight: string }> = {
   'TO_DO':       { label: 'Cần làm',          icon: '○', bgLight: 'bg-blue-50'   },
-  'NOT_STARTED': { label: 'Chưa bắt đầu',     icon: '○', bgLight: 'bg-blue-50'   },
   'IN_PROGRESS': { label: 'Đang thực hiện',   icon: '◑', bgLight: 'bg-orange-50' },
   'PAUSED':      { label: 'Tạm dừng',         icon: '⏸', bgLight: 'bg-yellow-50' },
-  'REVIEWING':   { label: 'Đang review',      icon: '◷', bgLight: 'bg-purple-50' },
   'DONE':        { label: 'Hoàn thành',       icon: '●', bgLight: 'bg-green-50'  },
-  'COMPLETED':   { label: 'Hoàn thành',       icon: '●', bgLight: 'bg-green-50'  },
 };
 
 const STATUS_COLORS: Record<string, string> = {
   'TO_DO':       '#3B82F6',
-  'NOT_STARTED': '#3B82F6',
   'IN_PROGRESS': '#F97316',
   'PAUSED':      '#EAB308',
-  'REVIEWING':   '#8B5CF6',
   'DONE':        '#22C55E',
-  'COMPLETED':   '#22C55E',
 };
 
 const TaskStatusAnalytics: React.FC<TaskStatusAnalyticsProps> = ({ data }) => {
@@ -62,7 +56,7 @@ const TaskStatusAnalytics: React.FC<TaskStatusAnalyticsProps> = ({ data }) => {
       color,
       percentage: pct,
     };
-  }).filter(item => item.count > 0);
+  });
 
   const maxCount = Math.max(...enriched.map(d => d.count), 1);
 

@@ -83,27 +83,27 @@ const TaskStatusRadar: React.FC<TaskStatusRadarProps> = ({ data }) => {
   return (
     <div className="w-full h-full flex flex-col justify-between">
       {/* Radar Chart Wrapper */}
-      <div className="w-full h-[180px] flex items-center justify-center">
+      <div className="w-full h-[210px] flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
-            <PolarGrid stroke="#F3F4F6" />
+          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+            <PolarGrid gridType="circle" stroke="#E5E7EB" />
             <PolarAngleAxis
               dataKey="subject"
               tick={{ fill: '#4B5563', fontSize: 11, fontWeight: 500 }}
             />
             <PolarRadiusAxis
-              angle={30}
-              domain={[0, 'auto']}
-              tick={{ fill: '#9CA3AF', fontSize: 9 }}
+              tick={false}
               axisLine={false}
             />
             <Radar
               name="Công việc"
               dataKey="count"
               stroke="#F97316"
+              strokeWidth={2}
               fill="#F97316"
-              fillOpacity={0.15}
-              dot={{ r: 4, fill: '#F97316', strokeWidth: 2, stroke: '#FFF' }}
+              fillOpacity={0.25}
+              dot={{ r: 6, fill: '#F97316', stroke: '#FFF', strokeWidth: 2 }}
+              activeDot={{ r: 8, fill: '#F97316', stroke: '#FFF', strokeWidth: 2 }}
             />
             <Tooltip content={<CustomTooltip />} />
           </RadarChart>

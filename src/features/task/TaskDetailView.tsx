@@ -7,7 +7,6 @@ import { taskPriorityApi, type TaskPriorityResponse } from '../task/infrastructu
 import { projectApi } from '../task/infrastructure/project.client';
 import { userApi } from '../user/infrastructure/user.api';
 import apiClient from '../../shared/http/apiClient';
-import ConfirmModal from '../../components/common/ConfirmModal';
 import { useFeatures } from '../../shared/hooks/useFeatures';
 import { TASK_PERMISSIONS } from './config/taskPermissions';
 
@@ -147,8 +146,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onUpdate, 
   // userId → fullName map
   const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
 
-  // Delete confirmation state
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
 
   // Permission gates — reuses cached result from useFeatures
   const { can, isLoading: featuresLoading } = useFeatures();
@@ -326,7 +324,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onUpdate, 
                 {canDelete && (
                   <div style={{ position: 'relative' }}>
                     <button
-                      onClick={() => setShowDeleteConfirm(true)}
+                      onClick={onDelete}
                       className="delete-button"
                       title="Xóa công việc"
                     >
@@ -651,17 +649,6 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onUpdate, 
           </div>
         </div>
       </div>
-
-      <ConfirmModal
-        isOpen={showDeleteConfirm}
-        title="Bạn xác nhận xóa?"
-        message="Hành động này không thể hoàn tác."
-        confirmLabel="Có"
-        cancelLabel="Không"
-        confirmVariant="danger"
-        onConfirm={() => { setShowDeleteConfirm(false); onDelete?.(); }}
-        onCancel={() => setShowDeleteConfirm(false)}
-      />
     </div>
   );
 };

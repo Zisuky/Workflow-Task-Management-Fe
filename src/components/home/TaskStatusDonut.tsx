@@ -1,36 +1,61 @@
 import React from 'react';
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  Tooltip
+} from 'recharts';
 
 interface TaskStatusData {
-  status: string;    // raw code from backend: TO_DO, IN_PROGRESS, etc.
+  status: string;    // TO_DO, IN_PROGRESS, PAUSED, DONE
   count: number;
-  color: string;
-  percentage: number;
 }
 
-interface TaskStatusAnalyticsProps {
+interface TaskStatusRadarProps {
   data: TaskStatusData[];
 }
 
-const STATUS_META: Record<string, { label: string; icon: string; bgLight: string }> = {
-  'TO_DO':       { label: 'Cần làm',          icon: '○', bgLight: 'bg-blue-50'   },
-  'IN_PROGRESS': { label: 'Đang thực hiện',   icon: '◑', bgLight: 'bg-orange-50' },
-  'PAUSED':      { label: 'Tạm dừng',         icon: '⏸', bgLight: 'bg-yellow-50' },
-  'DONE':        { label: 'Hoàn thành',       icon: '●', bgLight: 'bg-green-50'  },
+const STATUS_LABELS: Record<string, string> = {
+  'TO_DO': 'Cần làm',
+  'IN_PROGRESS': 'Đang thực hiện',
+  'PAUSED': 'Tạm dừng',
+  'DONE': 'Hoàn thành',
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  'TO_DO':       '#3B82F6',
-  'IN_PROGRESS': '#F97316',
-  'PAUSED':      '#EAB308',
-  'DONE':        '#22C55E',
+  'TO_DO': '#3B82F6',       // Xanh dương
+  'IN_PROGRESS': '#F97316', // Cam chủ đạo
+  'PAUSED': '#EAB308',      // Vàng
+  'DONE': '#22C55E',        // Xanh lá
 };
 
-const TaskStatusAnalytics: React.FC<TaskStatusAnalyticsProps> = ({ data }) => {
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white/95 backdrop-blur-sm border border-gray-100 rounded-lg p-2.5 shadow-lg">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
+          <span className="text-xs font-semibold text-gray-700">{data.subject}</span>
+        </div>
+        <div className="text-sm font-bold text-gray-900 font-mono pl-4">
+          {data.count} công việc
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const TaskStatusRadar: React.FC<TaskStatusRadarProps> = ({ data }) => {
   const total = data.reduce((sum, s) => sum + s.count, 0);
 
   if (!data || data.length === 0 || total === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[180px] gap-2">
+      <div className="flex flex-col items-center justify-center h-full min-h-[220px] gap-2">
         <svg className="w-10 h-10 text-gray-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
             d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
@@ -42,78 +67,63 @@ const TaskStatusAnalytics: React.FC<TaskStatusAnalyticsProps> = ({ data }) => {
     );
   }
 
-  // Recalculate percentage from raw count to ensure accuracy
-  const enriched = data.map(item => {
-    const code = item.status; // expected to be raw code, not translated
-    const pct = total > 0 ? Math.round((item.count / total) * 1000) / 10 : 0;
-    const color = STATUS_COLORS[code] || item.color || '#9CA3AF';
-    const meta = STATUS_META[code];
+  const orderedKeys = ['TO_DO', 'IN_PROGRESS', 'PAUSED', 'DONE'];
+
+  // Map to fixed order to ensure perfect radar shape structure
+  const chartData = orderedKeys.map(key => {
+    const item = data.find(d => d.status === key);
     return {
-      ...item,
-      label: meta?.label || code,
-      icon: meta?.icon || '●',
-      bgLight: meta?.bgLight || 'bg-gray-50',
-      color,
-      percentage: pct,
+      status: key,
+      subject: STATUS_LABELS[key] || key,
+      count: item ? item.count : 0,
+      color: STATUS_COLORS[key] || '#9CA3AF',
     };
   });
 
-  const maxCount = Math.max(...enriched.map(d => d.count), 1);
-
   return (
-    <div className="w-full h-full flex flex-col gap-4">
-      {/* Top KPI pills */}
-      <div className="grid grid-cols-2 gap-2">
-        {enriched.slice(0, 4).map((item, i) => (
-          <div
-            key={i}
-            className={`${item.bgLight} rounded-xl px-3 py-2 flex items-center justify-between`}
-          >
+    <div className="w-full h-full flex flex-col justify-between">
+      {/* Radar Chart Wrapper */}
+      <div className="w-full h-[180px] flex items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
+            <PolarGrid stroke="#F3F4F6" />
+            <PolarAngleAxis
+              dataKey="subject"
+              tick={{ fill: '#4B5563', fontSize: 11, fontWeight: 500 }}
+            />
+            <PolarRadiusAxis
+              angle={30}
+              domain={[0, 'auto']}
+              tick={{ fill: '#9CA3AF', fontSize: 9 }}
+              axisLine={false}
+            />
+            <Radar
+              name="Công việc"
+              dataKey="count"
+              stroke="#F97316"
+              fill="#F97316"
+              fillOpacity={0.15}
+              dot={{ r: 4, fill: '#F97316', strokeWidth: 2, stroke: '#FFF' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Legend list below */}
+      <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-gray-100">
+        {chartData.map((item, i) => (
+          <div key={i} className="flex items-center justify-between px-3 py-1.5 bg-gray-50 rounded-lg transition-colors hover:bg-gray-100/70">
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-base" style={{ color: item.color }}>{item.icon}</span>
-              <span className="text-xs font-medium text-gray-600 truncate">{item.label}</span>
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+              <span className="text-xs font-medium text-gray-600 truncate">{item.subject}</span>
             </div>
-            <div className="flex flex-col items-end ml-2 flex-shrink-0">
-              <span className="text-sm font-bold tabular-nums" style={{ color: item.color }}>
-                {item.count}
-              </span>
-              <span className="text-[10px] text-gray-400 leading-tight">{item.percentage}%</span>
-            </div>
+            <span className="text-xs font-bold text-gray-900 font-mono ml-2">{item.count}</span>
           </div>
         ))}
-      </div>
-
-      {/* Analytics bar list */}
-      <div className="flex flex-col gap-2.5">
-        {enriched.map((item, i) => (
-          <div key={i} className="flex items-center gap-3">
-            {/* Label */}
-            <span className="text-xs text-gray-500 w-[96px] flex-shrink-0 font-medium leading-tight">{item.label}</span>
-
-            {/* Bar track */}
-            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700 ease-out"
-                style={{
-                  width: `${(item.count / maxCount) * 100}%`,
-                  backgroundColor: item.color,
-                }}
-              />
-            </div>
-
-            {/* Count */}
-            <span className="text-xs font-bold tabular-nums text-gray-700 w-6 text-right">{item.count}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className="mt-auto pt-2 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">Tổng</span>
-        <span className="text-sm font-bold text-gray-700 tabular-nums">{total} tasks</span>
       </div>
     </div>
   );
 };
 
-export default TaskStatusAnalytics;
+export default TaskStatusRadar;

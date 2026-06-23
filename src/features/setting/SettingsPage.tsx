@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { userApi, useCurrentUser } from '../user/infrastructure/user.api';
+import { useFeatures } from '../../shared/hooks/useFeatures';
 import type { User } from '../../shared/types';
 import api from '../../shared/http/apiClient';
 import { taskGroupApi } from '../task/infrastructure/taskGroup.client';
@@ -1075,6 +1076,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
 
 const SettingsPage: React.FC = () => {
   const { currentUser, refetch: refetchCurrentUser } = useCurrentUser();
+  const location = useLocation();
   const { can, isLoading: isFeaturesLoading } = useFeatures();
   const [activeTab, setActiveTab] = useState<ActiveTab>('members');
 

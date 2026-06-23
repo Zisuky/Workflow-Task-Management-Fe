@@ -17,28 +17,12 @@ interface HomeData {
 }
 
 const priorityColors: Record<string, string> = {
-  'HIGH': '#EF4444',
-  'MEDIUM': '#F97316',
+  'HIGHEST': '#EF4444',
+  'HIGH': '#F97316',
+  'MEDIUM': '#3B82F6',
   'LOW': '#22C55E',
+  'NOT_STARTED': '#9CA3AF',
   'UNKNOWN': '#9CA3AF',
-};
-
-const statusColors: Record<string, string> = {
-  'TO_DO': '#3B82F6',
-  'NOT_STARTED': '#3B82F6',
-  'IN_PROGRESS': '#F97316',
-  'PAUSED': '#EAB308',
-  'DONE': '#22C55E',
-  'COMPLETED': '#22C55E',
-};
-
-const statusTranslations: Record<string, string> = {
-  'TO_DO': 'Chưa bắt đầu',
-  'NOT_STARTED': 'Chưa bắt đầu',
-  'IN_PROGRESS': 'Đang thực hiện',
-  'PAUSED': 'Tạm dừng',
-  'DONE': 'Hoàn thành',
-  'COMPLETED': 'Hoàn thành',
 };
 
 const emptyData: HomeData = {
@@ -97,9 +81,10 @@ const HomePage: React.FC<HomePageProps> = ({ currentTimeFilter = 'day' }) => {
 
         const totalStatusCount = taskStatus.reduce((sum, s) => sum + s.count, 0);
         const mappedTaskStatus = taskStatus.map(s => ({
-          status: statusTranslations[s.status] || s.status,
+          // Keep raw status CODE so TaskStatusDonut can map color & label itself
+          status: s.status,
           count: s.count,
-          color: statusColors[s.status] || '#9CA3AF',
+          color: '#9CA3AF', // component overrides this
           percentage: totalStatusCount > 0 ? Math.round((s.count / totalStatusCount) * 100 * 10) / 10 : 0,
         }));
 

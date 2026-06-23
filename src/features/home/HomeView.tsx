@@ -120,18 +120,18 @@ const HomeView: React.FC<HomeViewProps> = ({ data, isLoading = false }) => {
           </div>
         </div>
 
-        {/* 3. Task Priority & Donut Chart Row - Responsive */}
+        {/* 3. Task Priority & Status Analytics Row - Responsive */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Task Priority */}
+          {/* Task Priority Progress Bars */}
           <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <h3 className="text-base font-semibold text-[#111827] mb-4">Số lượng công việc theo mức độ ưu tiên</h3>
             <TaskPriorityList data={data.taskPriority} />
           </div>
 
-          {/* Task Status Donut */}
-          <div className="bg-white rounded-xl p-5" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          {/* Task Status Analytics */}
+          <div className="bg-white rounded-xl p-5 flex flex-col" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <h3 className="text-base font-semibold text-[#111827] mb-4">Tỷ lệ công việc theo trạng thái</h3>
-            <div className="h-56 flex items-center justify-center !border-none !outline-none">
+            <div className="flex-1 min-h-[220px]">
               <TaskStatusDonut data={data.taskStatus} />
             </div>
           </div>

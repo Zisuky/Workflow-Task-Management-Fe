@@ -17,6 +17,7 @@ interface SidebarViewProps {
     currentUser?: User | null;
     isLoadingUser?: boolean;
     visibleMenuIds?: string[];
+    onProfileClick?: () => void;
 }
 function HomeIcon() {
     return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>;
@@ -70,6 +71,7 @@ const SidebarView: React.FC<SidebarViewProps> = ({
     currentUser,
     isLoadingUser = false,
     visibleMenuIds,
+    onProfileClick,
 }) => {
     const userInitials = getUserInitials(currentUser?.name);
     const userName = currentUser?.name || (isLoadingUser ? 'Đang tải...' : 'User');
@@ -90,23 +92,28 @@ const SidebarView: React.FC<SidebarViewProps> = ({
             >
                 <ChevronIcon isCollapsed={isCollapsed} />
             </button>
-            <div className="flex items-center gap-3 p-4 border-b border-gray-100">
-                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+            <button
+                onClick={onProfileClick}
+                className="w-full flex items-center gap-3 p-4 border-b border-gray-100 text-left hover:bg-gray-50/80 transition-colors cursor-pointer group focus:outline-none"
+            >
+                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 overflow-hidden">
                     {isLoadingUser ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : currentUser?.avatarUrl ? (
+                        <img src={currentUser.avatarUrl} alt={userName} className="w-full h-full object-cover" />
                     ) : (
                         userInitials
                     )}
                 </div>
                 {!isCollapsed && (
                     <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-semibold text-gray-800 truncate">
+                        <span className="text-sm font-semibold text-gray-800 truncate group-hover:text-orange-500 transition-colors">
                             {isLoadingUser ? 'Đang tải...' : userName}
                         </span>
                         <span className="text-xs text-gray-500">{userPosition}</span>
                     </div>
                 )}
-            </div>
+            </button>
             <nav className="flex-1 py-4 overflow-y-auto">
                 <ul className="flex flex-col gap-1 px-3">
                     {filteredMenuItems.map((item) => (

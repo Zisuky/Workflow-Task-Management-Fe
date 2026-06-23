@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { userApi } from '../user/infrastructure/user.api';
+import { useLocation } from 'react-router-dom';
+import { userApi, useCurrentUser } from '../user/infrastructure/user.api';
 import type { User } from '../../shared/types';
 import api from '../../shared/http/apiClient';
 import { taskGroupApi } from '../task/infrastructure/taskGroup.client';
@@ -12,7 +13,7 @@ interface RoleFeature { id: string; roleId: string; featureId: string; feature?:
 interface TaskGroup { id: string; name: string; description?: string; projectId?: string; }
 interface MemberRow extends User { roles: string[]; roleIds: string[]; }
 
-type ActiveTab = 'members' | 'roles' | 'taskgroups';
+type ActiveTab = 'members' | 'roles' | 'taskgroups' | 'profile';
 
 // ─── API clients ──────────────────────────────────────────────────────────────
 
@@ -844,10 +845,244 @@ const TaskGroupsTab: React.FC<TaskGroupsTabProps> = ({groups, loading, onRefresh
   );
 };
 
+// ─── Tab 4: Profile & Password Settings ────────────────────────────────────────
+
+interface ProfileTabProps {
+  currentUser: User | null;
+  onRefresh: () => void;
+}
+
+const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
+  const [fullName, setFullName] = useState(currentUser?.name || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [address, setAddress] = useState(currentUser?.address || '');
+  const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatarUrl || '');
+
+  // Password fields
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
+  const toast = useToast();
+
+  // Sync state if currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      setFullName(currentUser.name || '');
+      setPhone(currentUser.phone || '');
+      setAddress(currentUser.address || '');
+      setAvatarUrl(currentUser.avatarUrl || '');
+    }
+  }, [currentUser]);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim()) {
+      toast.error('Họ và tên không được để trống');
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      await userApi.updateProfile({
+        fullName: fullName.trim(),
+        phone: phone.trim() || null,
+        address: address.trim() || null,
+        avatarUrl: avatarUrl || null,
+      });
+      toast.success('Cập nhật thông tin cá nhân thành công');
+      onRefresh();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Cập nhật thông tin thất bại');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Vui lòng nhập đầy đủ các trường mật khẩu.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Xác nhận mật khẩu mới không khớp.');
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      await userApi.changePassword({ oldPassword, newPassword });
+      toast.success('Đổi mật khẩu thành công');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      setPasswordError(err?.response?.data?.message || 'Đổi mật khẩu thất bại. Vui lòng kiểm tra mật khẩu cũ.');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Kích thước ảnh đại diện không vượt quá 2MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const initials = fullName ? fullName.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() : '?';
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Cột trái: Ảnh đại diện & Thông tin nhanh */}
+      <div className="md:col-span-1 bg-white rounded-xl border border-gray-100 p-6 flex flex-col items-center">
+        <h3 className="text-sm font-semibold text-gray-900 mb-6 self-start">Ảnh đại diện</h3>
+        <div className="relative group w-32 h-32 rounded-full overflow-hidden border-2 border-gray-100 flex items-center justify-center bg-orange-50 text-orange-600 text-3xl font-bold mb-4">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <span>{initials}</span>
+          )}
+          <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Thay đổi ảnh
+            <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+          </label>
+        </div>
+        
+        {avatarUrl && (
+          <button 
+            type="button"
+            onClick={() => setAvatarUrl('')} 
+            className="text-xs text-red-500 hover:text-red-600 transition-colors font-medium mb-6"
+          >
+            Xoá ảnh đại diện
+          </button>
+        )}
+
+        <div className="w-full border-t border-gray-100 pt-4 text-center">
+          <p className="text-sm font-semibold text-gray-800">{currentUser?.name}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{currentUser?.email}</p>
+          <div className="mt-3 flex flex-wrap justify-center gap-1">
+            {currentUser?.roles?.map(r => (
+              <span key={r} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                {r}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Cột phải: Form cập nhật */}
+      <div className="md:col-span-2 space-y-6">
+        {/* Form thông tin cá nhân */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Thông tin cá nhân</h3>
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Tài khoản</label>
+                <input type="text" value={currentUser?.account || ''} disabled className="w-full px-3 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 text-gray-400 cursor-not-allowed" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                <input type="text" value={currentUser?.email || ''} disabled className="w-full px-3 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 text-gray-400 cursor-not-allowed" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Tên hiển thị *</label>
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Nhập tên hiển thị..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Số điện thoại</label>
+                <input type="text" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Nhập số điện thoại..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Địa chỉ</label>
+                <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Nhập địa chỉ..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button type="submit" disabled={savingProfile} className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white rounded-lg font-medium transition-colors">
+                {savingProfile ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Form đổi mật khẩu */}
+        <div className="bg-white rounded-xl border border-gray-100 p-6">
+          <h3 className="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Đổi mật khẩu</h3>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu hiện tại</label>
+              <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu mới</label>
+                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Xác nhận mật khẩu mới</label>
+                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              </div>
+            </div>
+
+            {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
+
+            <div className="flex justify-end pt-2">
+              <button type="submit" disabled={savingPassword} className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white rounded-lg font-medium transition-colors">
+                {savingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 const SettingsPage: React.FC = () => {
+  const { currentUser, refetch: refetchCurrentUser } = useCurrentUser();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<ActiveTab>('members');
+
+  // Check URL query parameters to set active tab
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'profile') {
+      setActiveTab('profile');
+    }
+  }, [location.search]);
 
   const [members,  setMembers]  = useState<MemberRow[]>([]);
   const [roles,    setRoles]    = useState<Role[]>([]);
@@ -949,6 +1184,10 @@ const SettingsPage: React.FC = () => {
       key: 'taskgroups', label: 'Nhóm công việc',
       icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>,
     },
+    {
+      key: 'profile', label: 'Thông tin tài khoản',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>,
+    },
   ];
 
   const stats = [
@@ -1010,6 +1249,9 @@ const SettingsPage: React.FC = () => {
         )}
         {activeTab==='taskgroups' && (
           <TaskGroupsTab groups={groups} loading={loadingGroups} onRefresh={fetchGroups}/>
+        )}
+        {activeTab==='profile' && (
+          <ProfileTab currentUser={currentUser} onRefresh={refetchCurrentUser} />
         )}
       </div>
     </div>

@@ -76,6 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle, onLogo
             currentUser={currentUser}
             isLoadingUser={isLoadingUser}
             visibleMenuIds={visibleMenuItems}
+            onProfileClick={() => navigate('/settings?tab=profile')}
         />
     );
 };

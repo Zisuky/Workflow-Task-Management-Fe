@@ -194,6 +194,14 @@ export const userApi = {
     await apiClient.post("/auth/reset-password", data);
   },
 
+  async updateProfile(data: { fullName: string; phone?: string | null; address?: string | null; avatarUrl?: string | null }): Promise<void> {
+    await apiClient.put("/users/profile", data);
+  },
+
+  async changePassword(data: { oldPassword: string; newPassword: string }): Promise<void> {
+    await apiClient.put("/users/profile/change-password", data);
+  },
+
   clearCache() {
     userByIdCache.clear();
     allUsersCache = null;

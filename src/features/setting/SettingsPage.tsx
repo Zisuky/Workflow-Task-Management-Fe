@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { userApi, useCurrentUser } from '../user/infrastructure/user.api';
+import { useFeatures } from '../../shared/hooks/useFeatures';
 import type { User } from '../../shared/types';
 import api from '../../shared/http/apiClient';
 import { taskGroupApi } from '../task/infrastructure/taskGroup.client';
@@ -1075,6 +1076,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
 
 const SettingsPage: React.FC = () => {
   const { currentUser, refetch: refetchCurrentUser } = useCurrentUser();
+  const location = useLocation();
   const { can, isLoading: isFeaturesLoading } = useFeatures();
   const [activeTab, setActiveTab] = useState<ActiveTab>('members');
 
@@ -1083,25 +1085,25 @@ const SettingsPage: React.FC = () => {
       key: 'members' as ActiveTab,
       label: 'Thành viên',
       icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
-      show: !isFeaturesLoading && (can('SETTING_VIEW') || can('MEMBER_VIEW')),
+      show: !isFeaturesLoading && can('MEMBER_VIEW'),
     },
     {
       key: 'roles' as ActiveTab,
       label: 'Vai trò & Quyền',
       icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
-      show: !isFeaturesLoading && (can('SETTING_VIEW') || can('ROLE_VIEW')),
+      show: !isFeaturesLoading && can('ROLE_VIEW'),
     },
     {
       key: 'taskgroups' as ActiveTab,
       label: 'Nhóm công việc',
       icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>,
-      show: !isFeaturesLoading && (can('SETTING_VIEW') || can('TASKGROUP_VIEW')),
+      show: !isFeaturesLoading && can('TASKGROUP_VIEW'),
     },
     {
       key: 'profile' as ActiveTab,
       label: 'Thông tin tài khoản',
       icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>,
-      show: !isFeaturesLoading && (can('SETTING_VIEW')),
+      show: !isFeaturesLoading && can('SETTING_VIEW'),
     },
   ].filter(t => t.show);
 
@@ -1219,6 +1221,8 @@ const SettingsPage: React.FC = () => {
     {label:'Nhóm công việc',    value: groups.length,                                     color:'text-green-600',  bg:'bg-green-50'},
   ];
 
+  const showStats = !isFeaturesLoading && (can('MEMBER_VIEW') || can('ROLE_VIEW') || can('TASKGROUP_VIEW'));
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
@@ -1230,14 +1234,16 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
-          {stats.map(s => (
-            <div key={s.label} className={`${s.bg} rounded-xl p-4`}>
-              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
+        {showStats && (
+          <div className="grid grid-cols-4 gap-4">
+            {stats.map(s => (
+              <div key={s.label} className={`${s.bg} rounded-xl p-4`}>
+                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Tab nav */}
         <div className="flex gap-1 bg-white border border-gray-100 rounded-xl p-1 w-fit shadow-sm">

@@ -853,6 +853,8 @@ interface ProfileTabProps {
 }
 
 const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
+  const { can } = useFeatures();
+  const canEditProfile = can('SETTING_VIEW');
   const [fullName, setFullName] = useState(currentUser?.name || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [address, setAddress] = useState(currentUser?.address || '');
@@ -960,14 +962,14 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
           ) : (
             <span>{initials}</span>
           )}
-          <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-            <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Thay đổi ảnh
-            <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
-          </label>
+            <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Thay đổi ảnh
+              <input type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+            </label>
         </div>
         
         {avatarUrl && (
@@ -1012,57 +1014,58 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
 
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Tên hiển thị *</label>
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Nhập tên hiển thị..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} disabled={!canEditProfile} placeholder="Nhập tên hiển thị..." className="w-full px-3 py-2 border border-gray-200 disabled:bg-gray-50 disabled:text-gray-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Số điện thoại</label>
-                <input type="text" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Nhập số điện thoại..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                <input type="text" value={phone} onChange={e => setPhone(e.target.value)} disabled={!canEditProfile} placeholder="Nhập số điện thoại..." className="w-full px-3 py-2 border border-gray-200 disabled:bg-gray-50 disabled:text-gray-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Địa chỉ</label>
-                <input type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="Nhập địa chỉ..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                <input type="text" value={address} onChange={e => setAddress(e.target.value)} disabled={!canEditProfile} placeholder="Nhập địa chỉ..." className="w-full px-3 py-2 border border-gray-200 disabled:bg-gray-50 disabled:text-gray-400 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
             </div>
-
-            <div className="flex justify-end pt-2">
-              <button type="submit" disabled={savingProfile} className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white rounded-lg font-medium transition-colors">
-                {savingProfile ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </button>
-            </div>
+              <div className="flex justify-end pt-2">
+                <button type="submit" disabled={savingProfile} className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white rounded-lg font-medium transition-colors">
+                  {savingProfile ? 'Đang lưu...' : 'Lưu thay đổi'}
+                </button>
+              </div>
           </form>
         </div>
 
         {/* Form đổi mật khẩu */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Đổi mật khẩu</h3>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu hiện tại</label>
-              <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+        {true && (
+          <div className="bg-white rounded-xl border border-gray-100 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Đổi mật khẩu</h3>
+            <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu mới</label>
-                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu hiện tại</label>
+                <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Xác nhận mật khẩu mới</label>
-                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu mới</label>
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Xác nhận mật khẩu mới</label>
+                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
               </div>
-            </div>
 
-            {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
+              {passwordError && <p className="text-xs text-red-500">{passwordError}</p>}
 
-            <div className="flex justify-end pt-2">
-              <button type="submit" disabled={savingPassword} className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white rounded-lg font-medium transition-colors">
-                {savingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
-              </button>
-            </div>
-          </form>
-        </div>
+              <div className="flex justify-end pt-2">
+                <button type="submit" disabled={savingPassword} className="px-4 py-2 text-sm bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white rounded-lg font-medium transition-colors">
+                  {savingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1072,17 +1075,53 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ currentUser, onRefresh }) => {
 
 const SettingsPage: React.FC = () => {
   const { currentUser, refetch: refetchCurrentUser } = useCurrentUser();
-  const location = useLocation();
+  const { can, isLoading: isFeaturesLoading } = useFeatures();
   const [activeTab, setActiveTab] = useState<ActiveTab>('members');
+
+  const tabs = [
+    {
+      key: 'members' as ActiveTab,
+      label: 'Thành viên',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
+      show: !isFeaturesLoading && (can('SETTING_VIEW') || can('MEMBER_VIEW')),
+    },
+    {
+      key: 'roles' as ActiveTab,
+      label: 'Vai trò & Quyền',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
+      show: !isFeaturesLoading && (can('SETTING_VIEW') || can('ROLE_VIEW')),
+    },
+    {
+      key: 'taskgroups' as ActiveTab,
+      label: 'Nhóm công việc',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>,
+      show: !isFeaturesLoading && (can('SETTING_VIEW') || can('TASKGROUP_VIEW')),
+    },
+    {
+      key: 'profile' as ActiveTab,
+      label: 'Thông tin tài khoản',
+      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>,
+      show: !isFeaturesLoading && (can('SETTING_VIEW')),
+    },
+  ].filter(t => t.show);
 
   // Check URL query parameters to set active tab
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab === 'profile') {
+    if (tab === 'profile' && tabs.some(t => t.key === 'profile')) {
       setActiveTab('profile');
+    } else if (tabs.length > 0 && !tabs.some(t => t.key === activeTab)) {
+      setActiveTab(tabs[0].key);
     }
-  }, [location.search]);
+  }, [location.search, tabs, activeTab]);
+
+  // Adjust active tab if default one is not available
+  useEffect(() => {
+    if (tabs.length > 0 && activeTab === 'members' && !tabs.some(t => t.key === 'members')) {
+      setActiveTab(tabs[0].key);
+    }
+  }, [tabs, activeTab]);
 
   const [members,  setMembers]  = useState<MemberRow[]>([]);
   const [roles,    setRoles]    = useState<Role[]>([]);
@@ -1171,24 +1210,7 @@ const SettingsPage: React.FC = () => {
   useEffect(() => { fetchRoles(); fetchFeatures(); fetchGroups(); }, [fetchRoles, fetchFeatures, fetchGroups]);
   useEffect(() => { if (!loadingRoles) fetchMembers(0); }, [loadingRoles, fetchMembers]);
 
-  const tabs: {key:ActiveTab; label:string; icon:React.ReactNode}[] = [
-    {
-      key: 'members', label: 'Thành viên',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
-    },
-    {
-      key: 'roles', label: 'Vai trò & Quyền',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>,
-    },
-    {
-      key: 'taskgroups', label: 'Nhóm công việc',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>,
-    },
-    {
-      key: 'profile', label: 'Thông tin tài khoản',
-      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>,
-    },
-  ];
+  // tabs array is dynamically computed based on user permissions above
 
   const stats = [
     {label:'Tổng thành viên',   value: memberTotalItems,                                  color:'text-blue-600',   bg:'bg-blue-50'},

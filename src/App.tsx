@@ -27,6 +27,14 @@ const FeatureRoute: React.FC<{ featureCode: string; children: React.ReactNode }>
   return can(featureCode) ? <>{children}</> : <Navigate to="/home" replace />;
 };
 
+/** Route guard specifically for settings: allows SETTING_VIEW or any profile view/edit/password change permission. */
+const SettingsRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { can, isLoading } = useFeatures();
+  if (isLoading) return null;
+  const hasAccess = can('SETTING_VIEW') || can('PROFILE_VIEW');
+  return hasAccess ? <>{children}</> : <Navigate to="/home" replace />;
+};
+
 function App() {
   return (
     <ToastProvider>
@@ -244,9 +252,9 @@ const AppContent: React.FC<{
               </FeatureRoute>
             } />
             <Route path="/settings" element={
-              <FeatureRoute featureCode='SETTING_VIEW'>
+              <SettingsRoute>
                 <SettingsPage />
-              </FeatureRoute>
+              </SettingsRoute>
             } />
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/login" element={<Navigate to="/home" replace />} />

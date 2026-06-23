@@ -568,6 +568,10 @@ const RolesTab: React.FC<RolesTabProps> = ({roles, features, loadingRoles, loadi
   const [editingFeature, setEditingFeature] = useState<Feature|null>(null);
   const [deletingFeatureId, setDeletingFeatureId] = useState<string|null>(null);
 
+  const [featureSearch, setFeatureSearch] = useState('');
+  const [featureCurrentPage, setFeatureCurrentPage] = useState(1);
+  const [featureItemsPerPage, setFeatureItemsPerPage] = useState(10);
+
   const toast = useToast();
 
   const handleDeleteRole = async (id: string, name: string) => {
@@ -596,6 +600,17 @@ const RolesTab: React.FC<RolesTabProps> = ({roles, features, loadingRoles, loadi
 
   const roleFields = [{label:'Mã vai trò (CODE)',key:'code',placeholder:'VD: MANAGER'},{label:'Tên vai trò',key:'name',placeholder:'VD: Quản lý dự án'}];
   const featureFields = [{label:'Mã quyền (CODE)',key:'code',placeholder:'VD: PROJECT_VIEW'},{label:'Tên quyền',key:'name',placeholder:'VD: Xem dự án'}];
+
+  const filteredFeatures = features.filter(f =>
+    f.name.toLowerCase().includes(featureSearch.toLowerCase()) ||
+    f.code.toLowerCase().includes(featureSearch.toLowerCase())
+  );
+
+  const featureTotalPages = Math.ceil(filteredFeatures.length / featureItemsPerPage);
+  const paginatedFeatures = filteredFeatures.slice(
+    (featureCurrentPage - 1) * featureItemsPerPage,
+    featureCurrentPage * featureItemsPerPage
+  );
 
   return (
     <div className="space-y-6">
@@ -667,11 +682,22 @@ const RolesTab: React.FC<RolesTabProps> = ({roles, features, loadingRoles, loadi
 
       {/* ── Panel dưới: Quyền ── */}
       <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <div>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 gap-4">
+          <div className="flex-shrink-0">
             <h2 className="text-sm font-semibold text-gray-900">Quyền trong hệ thống</h2>
-            <p className="text-xs text-gray-400 mt-0.5">{features.length} quyền</p>
+            <p className="text-xs text-gray-400 mt-0.5">{filteredFeatures.length} / {features.length} quyền</p>
           </div>
+
+          {/* Search bar */}
+          <div className="relative flex-1 max-w-md">
+            <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" placeholder="Tìm kiếm tên hoặc mã quyền..." value={featureSearch}
+              onChange={e=>{ setFeatureSearch(e.target.value); setFeatureCurrentPage(1); }}
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"/>
+          </div>
+
           <button onClick={()=>setShowCreateFeature(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium rounded-lg transition-colors">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
@@ -679,40 +705,105 @@ const RolesTab: React.FC<RolesTabProps> = ({roles, features, loadingRoles, loadi
           </button>
         </div>
         {loadingFeatures ? <Spinner/> : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Tên quyền</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Mã</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Trạng thái</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Hành động</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {features.length===0
-                ? <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400">Chưa có quyền nào</td></tr>
-                : features.map(f => (
-                  <tr key={f.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-3.5 text-sm font-medium text-gray-900">{f.name}</td>
-                    <td className="px-5 py-3.5"><code className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-mono">{f.code}</code></td>
-                    <td className="px-5 py-3.5">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${f.disabled?'bg-red-50 text-red-600':'bg-green-50 text-green-600'}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${f.disabled?'bg-red-500':'bg-green-500'}`}/>
-                        {f.disabled?'Vô hiệu':'Hoạt động'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={()=>setEditingFeature(f)} className="p-1.5 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" title="Sửa"><IconEdit/></button>
-                        <button onClick={()=>handleDeleteFeature(f.id,f.name)} disabled={deletingFeatureId===f.id}
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40" title="Xoá"><IconDelete/></button>
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto overflow-y-auto max-h-[300px]">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-100 sticky top-0 z-10">
+                  <tr>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">Tên quyền</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">Mã</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">Trạng thái</th>
+                    <th className="text-right px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">Hành động</th>
                   </tr>
-                ))
-              }
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {paginatedFeatures.length===0
+                    ? <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-gray-400">Không tìm thấy quyền nào</td></tr>
+                    : paginatedFeatures.map(f => (
+                      <tr key={f.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-3.5 text-sm font-medium text-gray-900">{f.name}</td>
+                        <td className="px-5 py-3.5"><code className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded font-mono">{f.code}</code></td>
+                        <td className="px-5 py-3.5">
+                          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${f.disabled?'bg-red-50 text-red-600':'bg-green-50 text-green-600'}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${f.disabled?'bg-red-500':'bg-green-500'}`}/>
+                            {f.disabled?'Vô hiệu':'Hoạt động'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={()=>setEditingFeature(f)} className="p-1.5 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" title="Sửa"><IconEdit/></button>
+                            <button onClick={()=>handleDeleteFeature(f.id,f.name)} disabled={deletingFeatureId===f.id}
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-40" title="Xoá"><IconDelete/></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-end gap-4 px-4 py-3 border-t border-gray-100 bg-gray-50">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>Tổng {filteredFeatures.length}</span>
+                <select
+                  value={featureItemsPerPage}
+                  onChange={(e) => {
+                    setFeatureItemsPerPage(Number(e.target.value));
+                    setFeatureCurrentPage(1);
+                  }}
+                  className="px-2 py-1 border border-gray-200 rounded text-sm focus:outline-none focus:border-orange-500 bg-white"
+                >
+                  <option value={10}>10/trang</option>
+                  <option value={20}>20/trang</option>
+                  <option value={50}>50/trang</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setFeatureCurrentPage(1)}
+                  disabled={featureCurrentPage === 1}
+                  className="px-2 py-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                >
+                  «
+                </button>
+                <button
+                  onClick={() => setFeatureCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={featureCurrentPage === 1}
+                  className="px-2 py-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                >
+                  ‹
+                </button>
+                {Array.from({ length: featureTotalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setFeatureCurrentPage(page)}
+                    className={`w-8 h-8 rounded text-sm font-medium ${featureCurrentPage === page
+                      ? 'bg-orange-500 text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setFeatureCurrentPage(p => Math.min(featureTotalPages, p + 1))}
+                  disabled={featureCurrentPage === featureTotalPages || featureTotalPages === 0}
+                  className="px-2 py-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                >
+                  ›
+                </button>
+                <button
+                  onClick={() => setFeatureCurrentPage(featureTotalPages)}
+                  disabled={featureCurrentPage === featureTotalPages || featureTotalPages === 0}
+                  className="px-2 py-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                >
+                  »
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
